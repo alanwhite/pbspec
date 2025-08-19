@@ -89,11 +89,11 @@ Instrument (Abstract)
 #### 3.1.2 Score Structure
 ```
 ScoreDocument
-├── Metadata (title, composer, version, sync status)
+├── Metadata (title, composer, version, sync status, default orientation, paper size)
 ├── Pages[] (physical page layout)
 │   └── TuneLines[] (lines assigned to this page)
 └── Tunes[] (1 or more tunes)
-    ├── Tune Metadata (title, type, tempo, key, orientation)
+    ├── Tune Metadata (title, type, tempo, key, orientation override)
     └── TuneLines[] (sequential lines that make up the tune)
         ├── TextLine (title, composer, headers, footers)
         └── Part (A, B, C, Intro, Outro, etc.)
@@ -131,10 +131,72 @@ ScoreDocument
 ### 3.2 Use Cases (Business Logic)
 
 #### 3.2.1 Score Management Use Cases
-- **CreateTuneUseCase**: Validate and create new tunes with proper structure
-- **UpdateMeasureTimeSignatureUseCase**: Change time signatures with cascading validation
-- **ValidateBarlineSequenceUseCase**: Ensure logical barline combinations
-- **ReorderPartsUseCase**: Modify part play order and repeat counts
+**CreateTuneUseCase**: Validate and create new tunes with proper structure
+
+**UpdateMeasureTimeSignatureUseCase (Enhanced):**
+1. Validate time signature change
+2. Apply change to domain model
+3. **Trigger RecalculatePaginationUseCase** with scope analysis
+4. Update affected measure spacing
+5. Recalculate system breaks if necessary
+6. **Update Pages[] assignments if spacing changes affect page capacity**
+7. Preserve user context during update
+
+**ValidateBarlineSequenceUseCase**: Ensure logical barline combinations
+**ReorderPartsUseCase**: Modify part play order and repeat counts
+
+**ReorderPartsUseCase (Enhanced):**
+1. Validate part reordering
+2. Update part sequence in domain model
+3. **Trigger RecalculatePaginationUseCase** with deferred priority
+4. Recalculate entire document pagination
+5. **Rebuild Pages[] structure with new TuneLines sequence**
+6. Update page navigation elements
+7. Maintain user focus on reordered content
+
+**RecalculatePaginationUseCase**: *(NEW)* Triggered when layout-affecting changes occur
+**ValidatePageBreaksUseCase**: *(NEW)* Ensure musical integrity across page boundaries  
+**OptimizeLayoutUseCase**: *(NEW)* Intelligent page break placement for musical phrasing
+**EnforceOrientationBreaksUseCase**: *(NEW)* Manage mandatory page breaks for orientation changes
+**ResolveTuneOrientationUseCase**: *(NEW)* Determine effective orientation from metadata hierarchy
+**HandlePaperSizeChangeUseCase**: *(NEW)* Recalculate entire document layout for paper size changes
+**ValidatePaperSizeCompatibilityUseCase**: *(NEW)* Ensure content fits within new paper constraints
+
+**EnforceOrientationBreaksUseCase:**
+1. **Resolve effective orientation** for each tune using metadata hierarchy
+2. **Compare orientations** between consecutive tunes
+3. **Force page break** when orientation changes detected
+4. **Update Pages[] structure** to reflect orientation-based page breaks
+5. **Validate page sharing** rules for same-orientation tunes
+6. **Optimize layout** within orientation constraints
+7. **Update page navigation** to reflect orientation-based breaks
+
+**ResolveTuneOrientationUseCase:**
+1. **Check tune metadata** for explicit orientation override
+2. **Fallback to document default** if no tune-level orientation
+3. **Apply application default** if no document-level setting
+4. **Cache resolved orientation** for performance
+5. **Notify dependent systems** of orientation resolution
+6. **Validate orientation compatibility** with content requirements
+
+**HandlePaperSizeChangeUseCase:**
+1. **Validate new paper size** against content requirements
+2. **Invalidate all cached layouts** due to global dimension change
+3. **Recalculate page capacity** (systems per page, measures per system, TuneLines per page)
+4. **Completely rebuild Pages[] structure** with new dimensions
+5. **Redistribute all content** across new page layout
+6. **Preserve musical groupings** within new constraints
+7. **Update export metadata** with new paper size
+8. **Maintain user view context** despite complete relayout
+
+**ValidatePaperSizeCompatibilityUseCase:**
+1. **Check minimum content requirements** against new paper dimensions
+2. **Validate font sizes** remain readable in new layout
+3. **Ensure instrument spacing** meets minimum standards
+4. **Check margin constraints** allow adequate content area
+5. **Validate Pages[] capacity** can accommodate all TuneLines
+6. **Warn user** of potential readability issues
+7. **Suggest alternative configurations** if needed
 
 #### 3.2.2 Audio Use Cases
 - **RecordPracticeSessionUseCase**: Capture and store practice recordings
@@ -172,6 +234,158 @@ ScoreDocument
 - playAudio(path) -> void
 - playMetronome(bpm, timeSignature) -> void
 - analyzeIntonation(audioData) -> IntonationResult
+
+### Section 3.4 Pagination Domain Logic
+
+#### 3.4.1 Pagination Triggers
+
+**Layout-Affecting Attributes:**
+- Music font size changes
+- Staff spacing modifications
+- Page margins adjustments
+- Part additions or removals
+- System-level instrument additions/removals
+- Time signature changes affecting measure spacing
+- Ornament density changes affecting horizontal spacing
+- Barline type changes affecting measure boundaries
+- **Tune orientation changes requiring page breaks**
+- **Document default orientation modifications**
+- **Paper size changes (A4, Letter, Legal, A3, etc.)**
+- **Print area dimension modifications**
+
+**Trigger Classification:**
+- **Immediate Triggers**: Font size, margins, spacing, paper size - require instant recalculation
+- **Deferred Triggers**: Part reordering, content additions - can be batched for performance
+- **Cascading Triggers**: Time signature changes, paper size changes - affect downstream measures and systems
+- **Global Triggers**: Paper size, document orientation - require complete document recalculation
+
+#### 3.4.2 Pagination Entities
+
+**PageLayout Entity:**
+- Current paper size (A4, Letter, Legal, A3, Custom)
+- Page dimensions derived from paper size and orientation
+- Page margins (top, bottom, left, right)
+- Current page orientation (portrait/landscape)
+- Staff system count per page (calculated from dimensions)
+- Vertical spacing between systems
+- Header and footer reservations
+- Orientation inheritance from tune or document default
+- Print area calculations (dimensions minus margins)
+- **TuneLines assignment and capacity management**
+
+**SystemLayout Entity:**
+- Instrument count and arrangement
+- Horizontal measure spacing
+- System breaks and continuations
+- Clef and key signature spacing
+- Barline alignment across instruments
+
+**TuneLineDistribution Entity:**
+- TuneLine to page mappings (updates Pages[] structure)
+- System boundaries within pages
+- Musical phrase preservation rules
+- Intelligent break point scoring
+- **Orientation-based page break enforcement**
+- **Cross-tune page sharing validation**
+- **Page capacity calculations for TuneLines assignment**
+
+#### 3.4.3 Pagination Algorithms
+
+**Flow Trigger Detection:**
+```
+PaginationTrigger {
+    - attributeType: LayoutAttribute
+    - affectedScope: [Page, System, Measure, Global]
+    - priority: [Immediate, Deferred, Cascading, Global]
+    - requiresFullRecalculation: boolean
+    - paperSizeChange: boolean
+    - orientationChange: boolean
+    - affectsPageAssignment: boolean
+}
+```
+
+**Recalculation Strategy:**
+1. **Scope Analysis**: Determine minimal recalculation area (unless Global trigger)
+2. **Paper Size Validation**: Check for document-wide paper size changes
+3. **Orientation Validation**: Check for tune orientation changes requiring page breaks
+4. **Pages Structure Update**: Recalculate TuneLines assignment to Pages[]
+5. **Dependency Mapping**: Identify cascading effects
+6. **Layout Invalidation**: Mark affected layout regions as dirty
+7. **Progressive Recalculation**: Process from most global to most specific
+8. **Musical Validation**: Ensure page breaks respect musical phrasing
+9. **Cross-Tune Page Validation**: Enforce orientation-based page sharing rules
+10. **User Experience**: Maintain scroll position and selection context
+
+#### 3.4.4 Paper Size Management
+
+**Supported Paper Sizes:**
+- **ISO Standards**: A4 (210×297mm), A3 (297×420mm), A5 (148×210mm)
+- **North American**: Letter (8.5×11"), Legal (8.5×14"), Tabloid (11×17")
+- **Custom Sizes**: User-defined dimensions with validation constraints
+- **Regional Defaults**: Automatic paper size based on locale/region
+
+**Paper Size Change Impact:**
+- **Complete Document Recalculation**: All pages affected by dimension changes
+- **Pages[] Structure Rebuild**: Complete recalculation of TuneLines to page assignments
+- **System Count Recalculation**: Different paper sizes accommodate different system counts
+- **Margin Adaptation**: Proportional margin scaling or absolute preservation options
+- **Font Size Validation**: Ensure readability within new page constraints
+- **Cross-Platform Consistency**: Maintain layout integrity across different default paper sizes
+
+**Dimension Calculation Matrix:**
+```
+PaperSizeMatrix {
+    - paperSize: PaperSizeStandard
+    - orientation: PageOrientation
+    - effectiveWidth: calculated from size + orientation
+    - effectiveHeight: calculated from size + orientation
+    - printableArea: dimensions minus margins
+    - systemCapacity: estimated systems per page
+    - measureCapacity: estimated measures per system
+    - tuneLineCapacity: estimated TuneLines per page
+}
+```
+
+**Regional Considerations:**
+- **Default Paper Size by Locale**: A4 for EU/UK, Letter for US/Canada
+- **Cultural Layout Preferences**: Margin conventions and spacing expectations
+- **Measurement Units**: Metric vs Imperial display and input
+- **Export Compatibility**: Ensure proper paper size metadata in PDF exports
+
+#### 3.4.5 Orientation-Based Pagination Rules
+
+**Orientation Hierarchy:**
+1. **Tune-Level Override**: Individual tune metadata orientation takes precedence
+2. **Document Default**: ScoreDocument default orientation when tune has no override
+3. **Application Default**: System default when no orientation specified
+
+**Page Break Enforcement:**
+- **Mandatory Page Break**: Any tune with different orientation from previous tune must start new page
+- **Same-Orientation Sharing**: Subsequent tunes with matching orientation may share pages based on available space
+- **Orientation Transition**: Cannot mix orientations within same page
+- **Empty Page Handling**: Orientation changes may result in partially filled pages
+- **Pages[] Update**: All orientation-based page breaks update the Pages structure
+
+**Validation Rules:**
+```
+OrientationPageBreakRule {
+    - currentTuneOrientation: PageOrientation
+    - previousTuneOrientation: PageOrientation  
+    - mustStartNewPage: boolean = (current != previous)
+    - canShareWithSubsequent: boolean = (current == next)
+    - pageCapacityRemaining: integer
+    - tuneLineCount: integer
+}
+```
+
+**Algorithm Flow:**
+1. **Evaluate Tune Orientation**: Resolve tune orientation from metadata hierarchy
+2. **Compare with Previous**: Check if orientation differs from previous tune on current page
+3. **Force Page Break**: If orientation differs, complete current page and start new page
+4. **Update Pages Structure**: Assign remaining TuneLines to new page with correct orientation
+5. **Continue Page Sharing**: If orientation matches, evaluate remaining page capacity
+6. **Capacity Check**: Determine if current page can accommodate additional TuneLines
+7. **Propagate Forward**: Apply same rules to subsequent tunes in sequence
 
 ## 4. Data Layer Implementation
 
@@ -224,6 +438,45 @@ ScoreDocument
 **Manual Resolution**: Present user with diff interface for complex conflicts
 **Backup Creation**: Always create backup before applying remote changes
 
+### Section 4.3 Pagination Data Management
+
+#### 4.3.1 Caching Strategy
+**Layout Cache Structure:**
+- Page-level layout snapshots
+- System-level measurement cache
+- Font metrics cache per size/style
+- Dependency invalidation tracking
+- **Paper size dimension cache**
+- **Cross-platform paper size conversion tables**
+- **Pages[] assignment cache for quick lookup**
+- **TuneLines to page mapping cache**
+
+**Persistence Strategy:**
+- Transient cache for active session
+- Optional layout cache persistence for large documents
+- Platform-specific storage optimization
+- Memory pressure handling
+- **Efficient Pages[] structure serialization**
+
+#### 4.3.2 Change Detection Infrastructure
+**Attribute Monitoring:**
+- Deep property change detection
+- Cascade effect analysis
+- Change event aggregation
+- Performance impact assessment
+- **Orientation change detection and validation**
+- **Cross-tune dependency tracking**
+- **Paper size change detection and global impact analysis**
+- **Regional paper size preference monitoring**
+- **Pages[] structure change tracking**
+
+**Event Sourcing:**
+- Track all layout-affecting changes
+- Enable sophisticated undo/redo operations
+- Support collaborative editing scenarios
+- Audit trail for debugging complex layouts
+- **Pages[] structure versioning for rollback support**
+
 ## 5. Presentation Layer Architecture
 
 ### 5.1 Platform-Specific UI Patterns
@@ -270,6 +523,36 @@ ScoreDocument
 **Positioning**: Proper baseline alignment and character spacing
 **Fallback Handling**: Graceful degradation for missing symbols
 
+### Section 5.3 Dynamic Pagination Architecture
+
+#### 5.3.1 iOS/macOS - SwiftUI Implementation
+**Reactive Pagination**: Combine framework for attribute change detection
+**Layout Invalidation**: NSLayoutManager invalidation patterns
+**Performance**: Background queue processing with main thread UI updates
+**State Management**: @Published properties for pagination state and Pages[] structure
+**Animation**: Smooth transitions during layout recalculation
+
+#### 5.3.2 Android - Compose Implementation  
+**State Observation**: StateFlow monitoring of layout-affecting properties
+**Layout Calculation**: Compose layout phase integration
+**Performance**: Coroutine-based background processing
+**State Hoisting**: Pagination state and Pages[] management in ViewModel layer
+**Animation**: Compose animations for smooth pagination updates
+
+#### 5.3.3 Windows - WinUI 3 Implementation
+**Property Change Detection**: DependencyProperty change callbacks
+**Layout System**: Integration with WinUI layout cycle
+**Performance**: Task-based async recalculation
+**MVVM Integration**: RelayCommand for pagination operations and Pages[] updates
+**Animation**: Composition animations for layout transitions
+
+#### 5.3.4 Linux - Qt Implementation
+**Signal-Slot Architecture**: Property change signal emission
+**Layout Management**: QLayout system integration
+**Performance**: QThread-based background processing
+**Model Updates**: QAbstractItemModel change notifications for Pages[] structure
+**Animation**: Qt Animation Framework for smooth updates
+
 ## 6. Audio Processing Architecture
 
 ### 6.1 Platform-Specific Audio Engines
@@ -300,6 +583,61 @@ ScoreDocument
 **Intonation Analysis**: Real-time pitch detection for tuning assistance
 **Performance Metrics**: Timing accuracy and rhythm analysis
 **Audio Quality**: Professional recording standards (44.1kHz+, 16-bit+)
+
+### Section 6.3 Pagination Performance Architecture 
+
+#### 6.3.1 Performance Optimization Strategies
+
+**Incremental Recalculation:**
+- Only recalculate affected page ranges (except for Global triggers like paper size)
+- Preserve unaffected Pages[] assignments when possible
+- Cache intermediate layout results
+- Minimize full document relayout events
+- **Full Document Recalculation**: Required for paper size and global changes
+- **Smart Pages[] Updates**: Only rebuild affected page assignments
+
+**Smart Batching:**
+- Combine multiple rapid changes into single recalculation
+- Debounce user input to prevent excessive calculations
+- Queue non-critical pagination updates
+- Prioritize visible page recalculation
+- **Batch Pages[] structure updates** for performance
+
+**Memory Management:**
+- Lazy loading of off-screen page layouts
+- Intelligent caching of layout calculations
+- Garbage collection of unused pagination data
+- Platform-specific memory optimization
+- **Efficient Pages[] structure management**
+
+#### 6.3.2 Musical Intelligence
+
+**Phrase-Aware Page Breaks:**
+- Analyze musical structure for optimal break points
+- Avoid breaking within ornament sequences
+- Preserve measure groupings where possible
+- Maintain part continuity across pages
+- **Respect orientation-mandated page breaks while optimizing musical flow**
+- **Balance partially-filled pages caused by orientation changes**
+- **Optimize TuneLines distribution across Pages[]**
+
+**System Break Intelligence:**
+- Balance system density across pages
+- Optimize staff spacing for readability
+- Respect instrument groupings
+- Handle multi-instrument alignment
+- **Accommodate orientation-specific page dimensions**
+- **Optimize system count for different orientations**
+- **Adapt system layout for different paper sizes**
+- **Maintain proportional spacing across paper size changes**
+- **Intelligent TuneLines assignment to maximize page utilization**
+
+**User Experience Preservation:**
+- Maintain current view context during recalculation
+- Preserve user selection across pagination changes
+- Smooth animation between layout states
+- Undo/redo support for pagination-affecting changes
+- **Maintain page navigation consistency during Pages[] updates**
 
 ## 7. SMuFL Music Notation System
 
@@ -408,6 +746,36 @@ ScoreDocument
 **Cloud Integration Testing**: Multi-provider synchronization validation
 **Export Testing**: Cross-platform format consistency verification
 **Localization Testing**: Cultural adaptation and translation accuracy
+
+**Pagination-Specific Testing**
+**Unit Tests:**
+- Layout calculation accuracy
+- Trigger detection reliability
+- Performance benchmarking
+- Musical phrase preservation
+- **Paper size conversion accuracy**
+- **Cross-platform paper size consistency**
+- **Regional default validation**
+- **Pages[] structure integrity validation**
+- **TuneLines assignment accuracy**
+
+**Integration Tests:**
+- Cross-platform layout consistency
+- Cloud synchronization with pagination changes
+- Export accuracy after dynamic pagination
+- Accessibility during layout transitions
+- **Paper size change synchronization across devices**
+- **Export format compatibility with different paper sizes**
+- **Regional settings impact on pagination**
+- **Pages[] structure synchronization and conflict resolution**
+
+**Performance Tests:**
+- Large document pagination performance
+- Rapid change handling capability
+- Memory usage during recalculation
+- Platform-specific optimization validation
+- **Pages[] structure rebuild performance**
+- **TuneLines redistribution efficiency**
 
 #### 10.1.3 UI Testing
 **Platform-Specific**: Native UI testing frameworks for each platform
