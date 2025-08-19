@@ -90,6 +90,8 @@ Instrument (Abstract)
 ```
 ScoreDocument
 ├── Metadata (title, composer, version, sync status)
+├── Pages[] (physical page layout)
+│   └── TuneLines[] (lines assigned to this page)
 └── Tunes[] (1 or more tunes)
     ├── Tune Metadata (title, type, tempo, key, orientation)
     └── TuneLines[] (sequential lines that make up the tune)
