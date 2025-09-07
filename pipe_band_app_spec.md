@@ -131,7 +131,83 @@ ScoreDocument
 ### 3.2 Use Cases (Business Logic)
 
 #### 3.2.1 Score Management Use Cases
-**CreateTuneUseCase**: Validate and create new tunes with proper structure
+
+**CreateScoreUseCase**: Create new Score containing an initial single tune
+
+**DeleteScoreUseCase**: Delete a Score from the repository
+
+**CreateFolderUseCase**: Create a new Folder in the repository
+
+**DeleteFolderUseCase**: Delete an empty Folder from the repository
+
+**SelectScoresUseCase**: Cause one or more Scores to be marked as Selected
+
+**OpenSelectedScoresUseCase**: Open selected scores for editing
+
+**CopyScoresUseCase**: Copy selected Scores to Clipboard
+
+**CutScoresUseCase**: Copy selected Scores to Clipboard and delete from repository
+
+**PasteScoresUseCase**: Copy Scores from Clipboard to current Folder
+
+#### 3.2.2 Score Editing Use Cases
+
+**CloseScoreUseCase**: Close editor for Score
+
+**DuplicateScoreUseCase**: Create a copy of the open Score in the same folder with a new name
+
+**CreateTuneUseCase**: Create and insert a new Tune in a Score
+
+**DeleteTuneUseCase**: Delete a Tune from the Score
+
+**InsertInstrumentInTuneUseCase**: Insert an Instrument in a Tune
+
+**RemoveInstrumentFromTuneUseCase**: Remove an Instrument from a Tune
+
+**ShowInstrumentUseCase**: Remove hidden marker from Instrument in a Tune
+
+**HideInstrumentUseCase**: Add hidden marker to an Instrument in a Tune 
+
+**CreatePartUseCase**: Create and insert a new Part in a Tune
+
+**SelectPartsUseCase**: Mark one or more Parts as selected
+
+**DeletePartUseCase**: Delete selected Parts from a Tune
+
+**CopySelectedPartsUseCase**: Copy selected Parts to the Clipboard
+
+**CutSelectedPartsUseCase**: Copy selected Parts to the Clipboard and delete from Tune
+
+**PasteSelectedPartsUseCase**: Copy selected Parts from Clipboard to Tune
+
+**CreateBarUseCase**: Create and insert a new Bar (Measure) in a Part
+
+**SelectBarUseCase**: Mark Bar as selected
+
+**DeleteBarUseCase**: Delete the selected bar(s)
+
+**CopyBarUseCase**: Copy the selected bars to the clipboard
+
+**CutBarUseCase**: Copy the selected bars to the Clipboard and delete them
+
+**PasteBarUseCase**: Insert the bars copied to the Clipboard before the current bar
+
+**SetBarClefUseCase**: Specify the Clef symbol, or none, to be used in the selected bar
+
+**SetBarTimeSigUseCase**: Specify the time signature that the selected and all subsequent bars will use
+
+**SetBarTimeSigVisibilityUseCase**: Specifies whether the time sig for the bar should be visible or not
+
+**SetBarOpeningBarLineUseCase**: Specifies which, or none, BarLine is at the start of the bar
+
+**SetBarClosingBarLineUseCase**: Specifies which, or none, BarLine is at the close of the bar, 
+including repeat dots if needed
+
+**SetBarEndingUseCase**: Specifies which times through a repeated part this bar is played, or none
+(default) meaning both times
+
+
+
 
 **UpdateMeasureTimeSignatureUseCase (Enhanced):**
 1. Validate time signature change
@@ -143,7 +219,6 @@ ScoreDocument
 7. Preserve user context during update
 
 **ValidateBarlineSequenceUseCase**: Ensure logical barline combinations
-**ReorderPartsUseCase**: Modify part play order and repeat counts
 
 **ReorderPartsUseCase (Enhanced):**
 1. Validate part reordering
@@ -155,11 +230,17 @@ ScoreDocument
 7. Maintain user focus on reordered content
 
 **RecalculatePaginationUseCase**: *(NEW)* Triggered when layout-affecting changes occur
+
 **ValidatePageBreaksUseCase**: *(NEW)* Ensure musical integrity across page boundaries  
+
 **OptimizeLayoutUseCase**: *(NEW)* Intelligent page break placement for musical phrasing
+
 **EnforceOrientationBreaksUseCase**: *(NEW)* Manage mandatory page breaks for orientation changes
+
 **ResolveTuneOrientationUseCase**: *(NEW)* Determine effective orientation from metadata hierarchy
+
 **HandlePaperSizeChangeUseCase**: *(NEW)* Recalculate entire document layout for paper size changes
+
 **ValidatePaperSizeCompatibilityUseCase**: *(NEW)* Ensure content fits within new paper constraints
 
 **EnforceOrientationBreaksUseCase:**
