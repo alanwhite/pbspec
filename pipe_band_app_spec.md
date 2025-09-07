@@ -970,6 +970,47 @@ OrientationPageBreakRule {
 **Windows**: Microsoft Store and direct installer
 **Linux**: Package managers and AppImage distribution
 
+### 13.3 Repository Architecture
+
+#### 13.3.1 Platform-Specific Repository Structure
+
+**Apple Ecosystem Repository (iOS/macOS)**
+- Single Xcode workspace containing both iOS and macOS targets
+- Shared Swift codebase with platform-specific UI implementations
+- Common domain logic and data layer across both Apple platforms
+- Platform-specific presentation layers using SwiftUI/UIKit patterns
+- Unified Core Data model with platform-appropriate optimizations
+
+**Android Repository**
+- Standalone Android Studio project with Kotlin implementation
+- Independent domain logic implementation following Clean Architecture principles
+- Android-specific Room database and Jetpack Compose UI
+- No code sharing dependencies with other platforms
+
+**Windows Repository**
+- Standalone Visual Studio solution with C#/.NET implementation
+- Independent domain logic implementation following Clean Architecture principles
+- WinUI 3 presentation layer with Entity Framework Core data persistence
+- No code sharing dependencies with other platforms
+
+**Linux Repository**
+- Standalone repository with Qt/C++ or Rust/Tauri implementation
+- Independent domain logic implementation following Clean Architecture principles
+- Platform-specific UI and data storage solutions
+- No code sharing dependencies with other platforms
+
+#### 13.3.2 Cross-Platform Consistency Strategy
+
+**Domain Logic Parity**: Each platform implements identical business rules and use cases using platform-native languages and patterns, ensuring behavioral consistency without code sharing.
+
+**Specification-Driven Development**: This architectural specification serves as the single source of truth for consistent implementation across all repositories.
+
+**Interface Contracts**: Standardized API contracts and data formats ensure interoperability where needed (exports, cloud sync) without requiring shared codebases.
+
+**Independent Evolution**: Each platform repository can evolve independently while maintaining architectural and functional parity through specification adherence.
+
+This approach maximizes platform-native optimization while maintaining consistency through disciplined architectural alignment rather than code sharing.
+
 ## 14. Future Enhancements
 
 ### 14.1 Advanced Features Roadmap
