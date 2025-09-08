@@ -70,11 +70,12 @@ This specification outlines a cross-platform application for Scottish pipe band 
 
 ## 3. Domain Layer (Platform-Agnostic)
 
-### 3.1 Core Entities
+## 3.1 Core Entities
+
+### 3.1.1 Instrument Hierarchy
 
 The domain layer defines the business logic in a platform-independent manner. Each platform implements these concepts using their native languages while maintaining identical behavior.
 
-#### 3.1.1 Instrument Hierarchy
 ```
 Instrument (Abstract)
 ├── Bagpipes
@@ -90,14 +91,27 @@ Instrument (Abstract)
 - Default clef assignment
 - SMuFL symbol mappings
 
-#### 3.1.2 Score Structure
+**Enhanced Instrument Capabilities:**
+```
+InstrumentCapabilities
+├── TuningSystem (available tunings, default tuning)
+├── ClefAssignments (primary clef, acceptable alternatives)  
+├── NotationRules (ornament availability, special symbols)
+├── AudioCharacteristics (frequency range, harmonics)
+└── LayoutRequirements (spacing needs, multi-staff requirements)
+```
+
+### 3.1.2 Score Structure with Layout Integration
+
 ```
 ScoreDocument
 ├── Metadata (title, composer, version, sync status, default orientation, paper size)
-├── Pages[] (physical page layout)
+├── Pages[] (physical page layout assignments)
 │   └── TuneLines[] (lines assigned to this page)
+├── DocumentLayoutSettings (global layout preferences)
 └── Tunes[] (1 or more tunes)
     ├── Tune Metadata (title, type, tempo, key, orientation override)
+    ├── TuneLayoutPreference (page break policy, spacing preferences)
     └── TuneLines[] (sequential lines that make up the tune)
         ├── TextLine (title, composer, headers, footers)
         └── Part (A, B, C, Intro, Outro, etc.)
@@ -106,371 +120,2088 @@ ScoreDocument
                 ├── SystemStartElements[] (per instrument)
                 │   ├── Clef (for this instrument at system start)
                 │   └── Accidentals[] (sharp signs for bagpipe notation)
+                ├── SystemLayoutHints (spacing, break preferences)
                 ├── Measures[] (synchronized across all instruments)
                 │   ├── InstrumentMeasures[] (per instrument)
-                │   │   └── MusicalElements[] (notes, rests, ornaments)
+                │   │   └── MusicalElements[] (notes, rests, ornaments with layout)
+                │   ├── MeasureLayoutHints (width, compression, break hints)
                 │   └── TimeSignature (cascading)
                 └── Barlines[] (system-wide, spanning all instruments)
 ```
 
-#### 3.1.3 Musical Elements
+### 3.1.3 Musical Elements with Embedded Layout
+
+#### Enhanced Musical Element Hierarchy
+
+**Note Entity with Layout Integration:**
+```
+Note
+├── Musical Properties (Domain Core)
+│   ├── pitch: Pitch
+│   ├── duration: Duration
+│   ├── ornaments: [Ornament]
+│   ├── accidental: Accidental?
+│   ├── tie: TieType?
+│   └── articulation: [Articulation]
+├── Layout Properties (Domain Embedded)
+│   ├── position: CGPoint? (nil = auto-calculated)
+│   ├── spacingHints: SpacingHints? (nil = use defaults)
+│   ├── visualStyle: VisualStyle? (nil = use theme)
+│   └── collisionAvoidance: CollisionHints?
+└── Domain Methods
+    ├── withPosition(CGPoint) -> Note
+    ├── withSpacing(leading: CGFloat, trailing: CGFloat) -> Note
+    ├── withVisualStyle(VisualStyle) -> Note
+    └── invalidateLayout() -> Void
+```
+
+**Rest Entity:**
+```
+Rest
+├── Musical Properties
+│   ├── duration: Duration
+│   ├── isVisible: Bool
+│   └── type: RestType
+├── Layout Properties
+│   ├── position: CGPoint?
+│   ├── verticalOffset: CGFloat?
+│   └── size: CGFloat?
+└── Domain Methods
+    ├── withPosition(CGPoint) -> Rest
+    └── withVerticalOffset(CGFloat) -> Rest
+```
+
+**Ornament Entity:**
+```
+Ornament
+├── Musical Properties
+│   ├── type: OrnamentType
+│   ├── targetNote: NoteID
+│   ├── graceNotePattern: [GraceNote]
+│   ├── timing: OrnamentTiming
+│   └── styleVariation: OrnamentStyle
+├── Layout Properties
+│   ├── position: CGPoint?
+│   ├── symbolSpacing: CGFloat?
+│   ├── verticalOffset: CGFloat?
+│   └── size: CGFloat?
+└── Domain Methods
+    ├── withPosition(CGPoint) -> Ornament
+    ├── withSymbolSpacing(CGFloat) -> Ornament
+    └── getGraceNotePositions() -> [CGPoint]
+```
+
+#### Enhanced Measure Entity
+
+```
+Measure
+├── Musical Properties (Domain Core)
+│   ├── id: UUID
+│   ├── timeSignature: TimeSignature?
+│   ├── notes: [Note]
+│   ├── rests: [Rest]
+│   ├── ornaments: [Ornament]
+│   ├── keySignature: KeySignature?
+│   └── tempo: TempoMarking?
+├── Layout Properties (Domain Embedded)
+│   ├── width: CGFloat? (nil = auto-calculated)
+│   ├── compressionFactor: Float? (nil = normal)
+│   ├── breakHint: BreakHint? (nil = auto)
+│   ├── minimumWidth: CGFloat?
+│   └── spacingMultiplier: Float?
+├── Barline Properties
+│   ├── openingBarline: BarlineType
+│   ├── closingBarline: BarlineType
+│   ├── repeatDots: RepeatDotConfiguration?
+│   └── endingBracket: EndingBracket?
+└── Domain Methods
+    ├── addNote(Note) -> Void
+    ├── addRest(Rest) -> Void
+    ├── addOrnament(Ornament) -> Void
+    ├── setTimeSignature(TimeSignature) -> Void
+    ├── setWidth(CGFloat) -> Void
+    ├── applyCompressionFactor(Float) -> Void
+    ├── setBreakHint(BreakHint) -> Void
+    └── getEffectiveTimeSignature() -> TimeSignature
+```
+
+#### Enhanced MusicalSystem Entity
+
+```
+MusicalSystem
+├── Musical Properties (Domain Core)
+│   ├── id: UUID
+│   ├── instruments: [InstrumentID]
+│   ├── measures: [Measure]
+│   ├── systemStartElements: [InstrumentID: SystemStartElement]
+│   └── keySignature: KeySignature?
+├── Layout Properties (Domain Embedded)
+│   ├── staffSpacing: CGFloat? (nil = auto-calculated)
+│   ├── systemBreakBefore: Bool (default: false)
+│   ├── systemBreakAfter: Bool (default: false)
+│   ├── alignmentHints: AlignmentHints? (nil = auto)
+│   ├── verticalCompression: Float? (nil = normal)
+│   └── instrumentSpacing: [InstrumentID: CGFloat]?
+└── Domain Methods
+    ├── addMeasure(Measure) -> Void
+    ├── forceSystemBreak() -> Void
+    ├── setStaffSpacing(CGFloat) -> Void
+    ├── setInstrumentSpacing(InstrumentID, CGFloat) -> Void
+    ├── alignMeasures() -> Void
+    └── validateInstrumentSynchronization() -> [ValidationError]
+```
+
+### 3.1.4 Time Signature and Musical Intelligence
 
 **Time Signature Cascading Logic:**
 1. Check if current measure specifies time signature
-2. If not, search backwards through previous measures
-3. If none found, use tune's default time signature
-4. Cache results for performance optimization
+2. If not, search backwards through previous measures in same system
+3. If none found in system, search previous systems in same part
+4. If none found in part, use tune's default time signature
+5. Cache results for performance optimization
 
-**Clef Management:**
+**Enhanced Time Signature Entity:**
+```
+TimeSignature
+├── Musical Properties
+│   ├── numerator: Int
+│   ├── denominator: Int
+│   ├── beatGrouping: [Int] (for complex meters)
+│   ├── metronomeMarking: MetronomeMarking?
+│   └── displayStyle: TimeSignatureDisplay
+├── Layout Properties
+│   ├── position: CGPoint?
+│   ├── size: CGFloat?
+│   ├── visibility: TimeSignatureVisibility
+│   └── alignment: TimeSignatureAlignment
+└── Domain Methods
+    ├── getBeatsPerMeasure() -> Int
+    ├── getBeatValue() -> Duration
+    ├── getStrongBeats() -> [Int]
+    ├── validateNoteDurations([Note]) -> Bool
+    └── withVisibility(TimeSignatureVisibility) -> TimeSignature
+```
+
+**Clef Management with Layout:**
+```
+Clef
+├── Musical Properties
+│   ├── type: ClefType (treble, bass, alto, unpitched)
+│   ├── instrumentCompatibility: [InstrumentType]
+│   ├── octaveTransposition: Int?
+│   └── isDefault: Bool
+├── Layout Properties
+│   ├── position: CGPoint?
+│   ├── size: CGFloat?
+│   └── visibility: ClefVisibility
+└── Domain Methods
+    ├── isCompatibleWith(InstrumentType) -> Bool
+    ├── getStaffPositionFor(Pitch) -> StaffPosition
+    ├── withSize(CGFloat) -> Clef
+    └── shouldDisplayAt(SystemPosition) -> Bool
+```
+
+**Rendering Rules:**
+- Display clef when: first measure of system, clef change occurs, after system break
 - Default clefs: Bagpipes (Treble), Bass/Tenor Drums (Bass), Snare (Unpitched)
 - Alternative clefs available per instrument type
-- Render clef symbol when: first measure, clef change, system break
 
-**Barline Types:**
-- None, Single, Double, Final Double
-- Repeat Start (|:), Repeat End (:|), Repeat Both (:|:)
-- Dashed, Heavy, Dotted
-- SMuFL codepoints for consistent rendering
+### 3.1.5 Barline Types and Layout
 
-### 3.2 Use Cases (Business Logic)
-
-#### 3.2.1 Score Management Use Cases
-
-**CreateScoreUseCase**: Create new Score containing an initial single tune
-
-**DeleteScoreUseCase**: Delete a Score from the repository
-
-**CreateFolderUseCase**: Create a new Folder in the repository
-
-**DeleteFolderUseCase**: Delete an empty Folder from the repository
-
-**SelectScoresUseCase**: Cause one or more Scores to be marked as Selected
-
-**OpenSelectedScoresUseCase**: Open selected scores for editing
-
-**CopyScoresUseCase**: Copy selected Scores to Clipboard
-
-**CutScoresUseCase**: Copy selected Scores to Clipboard and delete from repository
-
-**PasteScoresUseCase**: Copy Scores from Clipboard to current Folder
-
-#### 3.2.2 Score Editing Use Cases
-
-**CloseScoreUseCase**: Close editor for Score
-
-**DuplicateScoreUseCase**: Create a copy of the open Score in the same folder with a new name
-
-**CreateTuneUseCase**: Create and insert a new Tune in a Score
-
-**DeleteTuneUseCase**: Delete a Tune from the Score
-
-**InsertInstrumentInTuneUseCase**: Insert an Instrument in a Tune
-
-**RemoveInstrumentFromTuneUseCase**: Remove an Instrument from a Tune
-
-**ShowInstrumentUseCase**: Remove hidden marker from Instrument in a Tune
-
-**HideInstrumentUseCase**: Add hidden marker to an Instrument in a Tune 
-
-**CreatePartUseCase**: Create and insert a new Part in a Tune
-
-**SelectPartsUseCase**: Mark one or more Parts as selected
-
-**DeletePartUseCase**: Delete selected Parts from a Tune
-
-**CopySelectedPartsUseCase**: Copy selected Parts to the Clipboard
-
-**CutSelectedPartsUseCase**: Copy selected Parts to the Clipboard and delete from Tune
-
-**PasteSelectedPartsUseCase**: Copy selected Parts from Clipboard to Tune
-
-**CreateBarUseCase**: Create and insert a new Bar (Measure) in a Part
-
-**SelectBarUseCase**: Mark Bar as selected
-
-**DeleteBarUseCase**: Delete the selected bar(s)
-
-**CopyBarUseCase**: Copy the selected bars to the clipboard
-
-**CutBarUseCase**: Copy the selected bars to the Clipboard and delete them
-
-**PasteBarUseCase**: Insert the bars copied to the Clipboard before the current bar
-
-**SetBarClefUseCase**: Specify the Clef symbol, or none, to be used in the selected bar
-
-**SetBarTimeSigUseCase**: Specify the time signature that the selected and all subsequent bars will use
-
-**SetBarTimeSigVisibilityUseCase**: Specifies whether the time sig for the bar should be visible or not
-
-**SetBarOpeningBarLineUseCase**: Specifies which, or none, BarLine is at the start of the bar
-
-**SetBarClosingBarLineUseCase**: Specifies which, or none, BarLine is at the close of the bar, 
-including repeat dots if needed
-
-**SetBarEndingUseCase**: Specifies which times through a repeated part this bar is played, or none
-(default) meaning both times
-
-
-
-
-**UpdateMeasureTimeSignatureUseCase (Enhanced):**
-1. Validate time signature change
-2. Apply change to domain model
-3. **Trigger RecalculatePaginationUseCase** with scope analysis
-4. Update affected measure spacing
-5. Recalculate system breaks if necessary
-6. **Update Pages[] assignments if spacing changes affect page capacity**
-7. Preserve user context during update
-
-**ValidateBarlineSequenceUseCase**: Ensure logical barline combinations
-
-**ReorderPartsUseCase (Enhanced):**
-1. Validate part reordering
-2. Update part sequence in domain model
-3. **Trigger RecalculatePaginationUseCase** with deferred priority
-4. Recalculate entire document pagination
-5. **Rebuild Pages[] structure with new TuneLines sequence**
-6. Update page navigation elements
-7. Maintain user focus on reordered content
-
-**RecalculatePaginationUseCase**: *(NEW)* Triggered when layout-affecting changes occur
-
-**ValidatePageBreaksUseCase**: *(NEW)* Ensure musical integrity across page boundaries  
-
-**OptimizeLayoutUseCase**: *(NEW)* Intelligent page break placement for musical phrasing
-
-**EnforceOrientationBreaksUseCase**: *(NEW)* Manage mandatory page breaks for orientation changes
-
-**ResolveTuneOrientationUseCase**: *(NEW)* Determine effective orientation from metadata hierarchy
-
-**HandlePaperSizeChangeUseCase**: *(NEW)* Recalculate entire document layout for paper size changes
-
-**ValidatePaperSizeCompatibilityUseCase**: *(NEW)* Ensure content fits within new paper constraints
-
-**EnforceOrientationBreaksUseCase:**
-1. **Resolve effective orientation** for each tune using metadata hierarchy
-2. **Compare orientations** between consecutive tunes
-3. **Force page break** when orientation changes detected
-4. **Update Pages[] structure** to reflect orientation-based page breaks
-5. **Validate page sharing** rules for same-orientation tunes
-6. **Optimize layout** within orientation constraints
-7. **Update page navigation** to reflect orientation-based breaks
-
-**ResolveTuneOrientationUseCase:**
-1. **Check tune metadata** for explicit orientation override
-2. **Fallback to document default** if no tune-level orientation
-3. **Apply application default** if no document-level setting
-4. **Cache resolved orientation** for performance
-5. **Notify dependent systems** of orientation resolution
-6. **Validate orientation compatibility** with content requirements
-
-**HandlePaperSizeChangeUseCase:**
-1. **Validate new paper size** against content requirements
-2. **Invalidate all cached layouts** due to global dimension change
-3. **Recalculate page capacity** (systems per page, measures per system, TuneLines per page)
-4. **Completely rebuild Pages[] structure** with new dimensions
-5. **Redistribute all content** across new page layout
-6. **Preserve musical groupings** within new constraints
-7. **Update export metadata** with new paper size
-8. **Maintain user view context** despite complete relayout
-
-**ValidatePaperSizeCompatibilityUseCase:**
-1. **Check minimum content requirements** against new paper dimensions
-2. **Validate font sizes** remain readable in new layout
-3. **Ensure instrument spacing** meets minimum standards
-4. **Check margin constraints** allow adequate content area
-5. **Validate Pages[] capacity** can accommodate all TuneLines
-6. **Warn user** of potential readability issues
-7. **Suggest alternative configurations** if needed
-
-#### 3.2.2 Audio Use Cases
-- **RecordPracticeSessionUseCase**: Capture and store practice recordings
-- **PlayMetronomeUseCase**: Generate precise metronome based on time signature
-- **AnalyzeIntonationUseCase**: Pitch detection and tuning feedback
-
-#### 3.2.3 Export Use Cases
-- **ExportToPDFUseCase**: Render score to PDF with SMuFL compliance
-- **ExportToImageUseCase**: Generate PNG/SVG with configurable DPI
-- **BatchExportUseCase**: Process multiple scores with various formats
-
-#### 3.2.4 Synchronization Use Cases
-- **SyncToCloudUseCase**: Upload changes to user's chosen cloud provider
-- **ResolveConflictsUseCase**: Merge concurrent edits with conflict resolution
-- **OfflineQueueUseCase**: Queue changes for later synchronization
-
-### 3.3 Repository Interfaces
-
-#### 3.3.1 Data Repositories
-**TuneRepository**
-- getAllTunes() -> List<Tune>
-- getTuneById(id) -> Tune
-- saveTune(tune) -> void
-- deleteTune(id) -> void
-- searchTunes(criteria) -> List<Tune>
-
-**CloudStorageRepository**
-- uploadScore(score, path) -> void
-- downloadScore(path) -> ScoreDocument
-- listFiles(directory) -> List<CloudFile>
-- syncChanges() -> SyncResult
-
-**AudioRepository**
-- recordAudio(path, settings) -> void
-- playAudio(path) -> void
-- playMetronome(bpm, timeSignature) -> void
-- analyzeIntonation(audioData) -> IntonationResult
-
-### Section 3.4 Pagination Domain Logic
-
-#### 3.4.1 Pagination Triggers
-
-**Layout-Affecting Attributes:**
-- Music font size changes
-- Staff spacing modifications
-- Page margins adjustments
-- Part additions or removals
-- System-level instrument additions/removals
-- Time signature changes affecting measure spacing
-- Ornament density changes affecting horizontal spacing
-- Barline type changes affecting measure boundaries
-- **Tune orientation changes requiring page breaks**
-- **Document default orientation modifications**
-- **Paper size changes (A4, Letter, Legal, A3, etc.)**
-- **Print area dimension modifications**
-
-**Trigger Classification:**
-- **Immediate Triggers**: Font size, margins, spacing, paper size - require instant recalculation
-- **Deferred Triggers**: Part reordering, content additions - can be batched for performance
-- **Cascading Triggers**: Time signature changes, paper size changes - affect downstream measures and systems
-- **Global Triggers**: Paper size, document orientation - require complete document recalculation
-
-#### 3.4.2 Pagination Entities
-
-**PageLayout Entity:**
-- Current paper size (A4, Letter, Legal, A3, Custom)
-- Page dimensions derived from paper size and orientation
-- Page margins (top, bottom, left, right)
-- Current page orientation (portrait/landscape)
-- Staff system count per page (calculated from dimensions)
-- Vertical spacing between systems
-- Header and footer reservations
-- Orientation inheritance from tune or document default
-- Print area calculations (dimensions minus margins)
-- **TuneLines assignment and capacity management**
-
-**SystemLayout Entity:**
-- Instrument count and arrangement
-- Horizontal measure spacing
-- System breaks and continuations
-- Clef and key signature spacing
-- Barline alignment across instruments
-
-**TuneLineDistribution Entity:**
-- TuneLine to page mappings (updates Pages[] structure)
-- System boundaries within pages
-- Musical phrase preservation rules
-- Intelligent break point scoring
-- **Orientation-based page break enforcement**
-- **Cross-tune page sharing validation**
-- **Page capacity calculations for TuneLines assignment**
-
-#### 3.4.3 Pagination Algorithms
-
-**Flow Trigger Detection:**
+**Enhanced Barline System:**
 ```
-PaginationTrigger {
-    - attributeType: LayoutAttribute
-    - affectedScope: [Page, System, Measure, Global]
-    - priority: [Immediate, Deferred, Cascading, Global]
-    - requiresFullRecalculation: boolean
-    - paperSizeChange: boolean
-    - orientationChange: boolean
-    - affectsPageAssignment: boolean
-}
+Barline
+├── Musical Properties
+│   ├── type: BarlineType
+│   ├── repeatConfiguration: RepeatConfiguration?
+│   ├── systemSpanning: Bool
+│   └── musicalFunction: MusicalFunction
+├── Layout Properties
+│   ├── position: CGFloat?
+│   ├── height: CGFloat? (for system-spanning)
+│   ├── thickness: CGFloat?
+│   └── spacing: BarlineSpacing?
+└── Domain Methods
+    ├── spansInstruments([InstrumentType]) -> Bool
+    ├── withPosition(CGFloat) -> Barline
+    ├── withSpacing(BarlineSpacing) -> Barline
+    └── validatePlacement(SystemContext) -> [ValidationError]
 ```
 
-**Recalculation Strategy:**
-1. **Scope Analysis**: Determine minimal recalculation area (unless Global trigger)
-2. **Paper Size Validation**: Check for document-wide paper size changes
-3. **Orientation Validation**: Check for tune orientation changes requiring page breaks
-4. **Pages Structure Update**: Recalculate TuneLines assignment to Pages[]
-5. **Dependency Mapping**: Identify cascading effects
-6. **Layout Invalidation**: Mark affected layout regions as dirty
-7. **Progressive Recalculation**: Process from most global to most specific
-8. **Musical Validation**: Ensure page breaks respect musical phrasing
-9. **Cross-Tune Page Validation**: Enforce orientation-based page sharing rules
-10. **User Experience**: Maintain scroll position and selection context
+**Barline Types with SMuFL Codepoints:**
+- None (transparent)
+- Single (U+E030)
+- Double (U+E031) 
+- Final Double (U+E032)
+- Repeat Start (U+E040)
+- Repeat End (U+E041)
+- Repeat Both (U+E042)
+- Dashed (U+E036)
+- Heavy (U+E034)
+- Dotted (U+E037)
 
-#### 3.4.4 Paper Size Management
+### 3.1.6 Ornament System Architecture
 
-**Supported Paper Sizes:**
-- **ISO Standards**: A4 (210×297mm), A3 (297×420mm), A5 (148×210mm)
-- **North American**: Letter (8.5×11"), Legal (8.5×14"), Tabloid (11×17")
-- **Custom Sizes**: User-defined dimensions with validation constraints
-- **Regional Defaults**: Automatic paper size based on locale/region
-
-**Paper Size Change Impact:**
-- **Complete Document Recalculation**: All pages affected by dimension changes
-- **Pages[] Structure Rebuild**: Complete recalculation of TuneLines to page assignments
-- **System Count Recalculation**: Different paper sizes accommodate different system counts
-- **Margin Adaptation**: Proportional margin scaling or absolute preservation options
-- **Font Size Validation**: Ensure readability within new page constraints
-- **Cross-Platform Consistency**: Maintain layout integrity across different default paper sizes
-
-**Dimension Calculation Matrix:**
+**OrnamentDefinition Entity:**
 ```
-PaperSizeMatrix {
-    - paperSize: PaperSizeStandard
-    - orientation: PageOrientation
-    - effectiveWidth: calculated from size + orientation
-    - effectiveHeight: calculated from size + orientation
-    - printableArea: dimensions minus margins
-    - systemCapacity: estimated systems per page
-    - measureCapacity: estimated measures per system
-    - tuneLineCapacity: estimated TuneLines per page
-}
+OrnamentDefinition
+├── Musical Properties
+│   ├── type: OrnamentType
+│   ├── graceNotePattern: [GraceNote]
+│   ├── contextRules: [ContextRule]
+│   ├── difficultyLevel: SkillLevel
+│   └── regionalVariations: [RegionalStyle: OrnamentVariation]
+├── Layout Properties
+│   ├── symbolSequence: [SMuFLCodepoint]
+│   ├── defaultSpacing: SpacingTemplate
+│   ├── positioningRules: PositioningRules
+│   └── collisionAvoidance: CollisionRules
+└── Domain Methods
+    ├── getPatternFor(targetNote: Note, style: RegionalStyle) -> [GraceNote]
+    ├── getSymbolSequenceFor(context: MusicalContext) -> [SMuFLCodepoint]
+    ├── calculatePositions(targetNote: Note, staffContext: StaffContext) -> [CGPoint]
+    └── validatePlacement(context: MusicalContext) -> [ValidationError]
 ```
 
-**Regional Considerations:**
-- **Default Paper Size by Locale**: A4 for EU/UK, Letter for US/Canada
-- **Cultural Layout Preferences**: Margin conventions and spacing expectations
-- **Measurement Units**: Metric vs Imperial display and input
-- **Export Compatibility**: Ensure proper paper size metadata in PDF exports
+**Ornament Types (Bagpipes):**
+- Basic: Cut, Strike, Grip
+- Complex: Doubling, Half Doubling, Throw
+- Advanced: Taorluath, Crunluath, Birl
+- Movement: Leumluath, Cadences
 
-#### 3.4.5 Orientation-Based Pagination Rules
+**Ornament Types (Drums):**
+- Snare: Rolls, Flams, Drags, Roughs (Traditional, Swiss), Open Drags
+- Bass/Tenor: Flams, Accents, Rim Shots
 
-**Orientation Hierarchy:**
-1. **Tune-Level Override**: Individual tune metadata orientation takes precedence
-2. **Document Default**: ScoreDocument default orientation when tune has no override
-3. **Application Default**: System default when no orientation specified
+### 3.1.7 Layout Value Objects
 
-**Page Break Enforcement:**
-- **Mandatory Page Break**: Any tune with different orientation from previous tune must start new page
-- **Same-Orientation Sharing**: Subsequent tunes with matching orientation may share pages based on available space
-- **Orientation Transition**: Cannot mix orientations within same page
-- **Empty Page Handling**: Orientation changes may result in partially filled pages
-- **Pages[] Update**: All orientation-based page breaks update the Pages structure
-
-**Validation Rules:**
+#### SpacingHints Value Object
 ```
-OrientationPageBreakRule {
-    - currentTuneOrientation: PageOrientation
-    - previousTuneOrientation: PageOrientation  
-    - mustStartNewPage: boolean = (current != previous)
-    - canShareWithSubsequent: boolean = (current == next)
-    - pageCapacityRemaining: integer
-    - tuneLineCount: integer
-}
+SpacingHints
+├── leading: CGFloat?
+├── trailing: CGFloat?
+├── above: CGFloat?
+├── below: CGFloat?
+├── internal: CGFloat? (for multi-symbol elements)
+└── isDefault: Bool (computed property)
 ```
 
-**Algorithm Flow:**
-1. **Evaluate Tune Orientation**: Resolve tune orientation from metadata hierarchy
-2. **Compare with Previous**: Check if orientation differs from previous tune on current page
-3. **Force Page Break**: If orientation differs, complete current page and start new page
-4. **Update Pages Structure**: Assign remaining TuneLines to new page with correct orientation
-5. **Continue Page Sharing**: If orientation matches, evaluate remaining page capacity
-6. **Capacity Check**: Determine if current page can accommodate additional TuneLines
-7. **Propagate Forward**: Apply same rules to subsequent tunes in sequence
+#### VisualStyle Value Object
+```
+VisualStyle
+├── fontSize: CGFloat?
+├── color: Color?
+├── weight: FontWeight?
+├── emphasis: EmphasisStyle?
+├── opacity: Float?
+└── isDefault: Bool (computed property)
+```
+
+#### BreakHint Value Object
+```
+BreakHint
+├── type: BreakType (avoid, prefer, force, forbid)
+├── priority: BreakPriority (low, normal, high, critical)
+├── scope: BreakScope (measure, system, page)
+├── reason: String? (user explanation)
+└── musicalJustification: MusicalReason?
+```
+
+#### CollisionHints Value Object
+```
+CollisionHints
+├── avoidanceStrategy: AvoidanceStrategy
+├── preferredDirection: CollisionDirection?
+├── minimumClearance: CGFloat
+├── allowOverlap: Bool
+└── priority: CollisionPriority
+```
+
+### 3.1.8 Layout Configuration Entities
+
+#### TuneLayoutPreference Entity
+```
+TuneLayoutPreference
+├── tuneId: UUID
+├── pageBreakPolicy: PageBreakPolicy (mandatory, preferred, allowed, avoid)
+├── compressionLevel: CompressionLevel (none, light, moderate, aggressive)
+├── spacingPreference: SpacingPreference (loose, normal, tight, custom)
+├── orientationOverride: PageOrientation?
+├── systemBreakStrategy: SystemBreakStrategy
+└── visualEmphasis: VisualEmphasis?
+```
+
+#### DocumentLayoutSettings Entity
+```
+DocumentLayoutSettings
+├── defaultPaperSize: PaperSize
+├── defaultOrientation: PageOrientation
+├── defaultMargins: EdgeInsets
+├── globalSpacingFactor: Float (0.5 to 2.0)
+├── compressionStrategy: CompressionStrategy
+├── breakOptimization: BreakOptimization
+├── fontSizeAdjustment: Float
+└── accessibilityMode: Bool
+```
+
+### 3.1.9 Musical Validation Rules
+
+#### Layout Consistency Rules
+```
+LayoutValidationRules
+├── notePositionBounds: BoundsRule
+├── spacingMinimums: SpacingRule
+├── systemBreakValidation: SystemBreakRule
+├── pageBreakValidation: PageBreakRule
+├── ornamentPositioning: OrnamentPositionRule
+└── instrumentAlignment: AlignmentRule
+```
+
+#### Musical Integrity Rules
+```
+MusicalValidationRules
+├── timeSignatureConsistency: TimeSignatureRule
+├── keySignaturePropagation: KeySignatureRule
+├── ornamentCompatibility: OrnamentCompatibilityRule
+├── instrumentSynchronization: SynchronizationRule
+├── barlineLogic: BarlineValidationRule
+└── phraseBoundaryRespect: PhraseBoundaryRule
+```
+
+### 3.1.10 Performance and Caching Entities
+
+#### LayoutCache Entity
+```
+LayoutCache
+├── systemLayouts: [UUID: SystemLayout]
+├── measureWidths: [UUID: CGFloat]
+├── ornamentPositions: [UUID: [CGPoint]]
+├── lastModified: [UUID: Date]
+├── cacheHitCount: Int
+└── cacheMissCount: Int
+```
+
+#### LayoutInvalidation Entity
+```
+LayoutInvalidation
+├── affectedSystems: Set<UUID>
+├── affectedMeasures: Set<UUID>
+├── invalidationType: InvalidationType
+├── cascadeLevel: CascadeLevel
+├── timestamp: Date
+└── reason: InvalidationReason
+```
+
+## 3.2 Use Cases (Business Logic)
+
+### 3.2.1 Score Management Use Cases
+
+#### CreateScoreUseCase
+**Purpose**: Create new Score containing an initial single tune with default layout settings
+
+**Input Parameters:**
+- title: String
+- composer: String?
+- defaultInstruments: [InstrumentType]
+- layoutSettings: DocumentLayoutSettings?
+
+**Business Rules:**
+- Score must have at least one tune
+- Default tune must have at least one part (A part)
+- Document layout settings use system defaults if not provided
+- Initial tune gets auto-generated ID and default metadata
+
+**Implementation:**
+```
+execute(title, composer, instruments, layoutSettings) -> ScoreDocument
+├── Validate input parameters
+├── Create DocumentLayoutSettings (use defaults if nil)
+├── Create initial Tune with A Part
+├── Create initial MusicalSystem with specified instruments
+├── Create initial Measure with default time signature
+├── Assign tune to Page[0] in TuneLines structure
+├── Save Score through repository
+└── Return created ScoreDocument
+```
+
+**Side Effects:**
+- Triggers initial pagination calculation
+- Creates default folder assignment
+- Initializes layout cache entries
+
+**Error Conditions:**
+- InvalidTitleError (empty or too long)
+- UnsupportedInstrumentCombinationError
+- PersistenceError
+
+#### DeleteScoreUseCase
+**Purpose**: Delete a Score from the repository with proper cleanup
+
+**Input Parameters:**
+- scoreId: UUID
+
+**Business Rules:**
+- Cannot delete score that is currently open for editing
+- Must clear all layout cache entries
+- Must remove from any folder assignments
+- Must cleanup associated audio files
+
+**Implementation:**
+```
+execute(scoreId) -> Void
+├── Validate score exists and not locked
+├── Clear layout cache for all systems in score
+├── Delete associated audio recordings
+├── Remove from folder assignments
+├── Delete score through repository
+└── Publish ScoreDeletedEvent
+```
+
+**Side Effects:**
+- Clears layout caches
+- Removes audio files
+- Updates folder contents
+- Notifies UI of deletion
+
+#### DuplicateScoreUseCase
+**Purpose**: Create a copy of existing Score with new identity
+
+**Input Parameters:**
+- sourceScoreId: UUID
+- newTitle: String
+- copyLayoutPreferences: Bool
+
+**Business Rules:**
+- Duplicated score gets new UUID for all entities
+- Layout preferences optionally copied or reset to defaults
+- Audio recordings are not duplicated
+- Placement in same folder as source
+
+**Implementation:**
+```
+execute(sourceScoreId, newTitle, copyLayout) -> ScoreDocument
+├── Load source score
+├── Deep copy all musical entities with new UUIDs
+├── Copy or reset layout preferences based on flag
+├── Clear all audio recordings
+├── Save duplicated score
+├── Copy folder assignments
+└── Return new ScoreDocument
+```
+
+#### CreateFolderUseCase
+**Purpose**: Create a new Folder in the repository for score organization
+
+**Input Parameters:**
+- name: String
+- parentFolderId: UUID?
+- sortOrder: FolderSortOrder
+
+**Business Rules:**
+- Folder names must be unique within parent
+- Maximum folder depth of 5 levels
+- Root folders have nil parentFolderId
+
+**Implementation:**
+```
+execute(name, parentId, sortOrder) -> Folder
+├── Validate folder name uniqueness in parent
+├── Validate maximum depth constraint
+├── Create Folder entity
+├── Save through repository
+└── Return created Folder
+```
+
+#### SelectScoresUseCase
+**Purpose**: Mark one or more Scores as selected for batch operations
+
+**Input Parameters:**
+- scoreIds: [UUID]
+- selectionMode: SelectionMode (replace, add, toggle)
+
+**Business Rules:**
+- Cannot select scores that are locked for editing
+- Selection state is transient (not persisted)
+- Empty selection is valid state
+
+**Implementation:**
+```
+execute(scoreIds, mode) -> SelectionState
+├── Validate all scores exist and are not locked
+├── Apply selection mode to current selection
+├── Validate selection constraints
+├── Update selection state
+└── Publish SelectionChangedEvent
+```
+
+### 3.2.2 Score Editing Use Cases
+
+#### OpenScoreForEditingUseCase
+**Purpose**: Open selected score for editing with proper locking and layout preparation
+
+**Input Parameters:**
+- scoreId: UUID
+- editingMode: EditingMode (read-only, collaborative, exclusive)
+
+**Business Rules:**
+- Only one exclusive edit session per score
+- Read-only mode allows multiple concurrent sessions
+- Collaborative mode requires conflict resolution setup
+
+**Implementation:**
+```
+execute(scoreId, mode) -> EditingSession
+├── Validate score exists and check lock status
+├── Acquire appropriate lock based on editing mode
+├── Load complete score with layout preferences
+├── Initialize layout cache for visible systems
+├── Setup undo/redo tracking
+├── Create editing session
+└── Publish ScoreOpenedEvent
+```
+
+**Side Effects:**
+- Locks score for exclusive editing
+- Prepares layout calculations
+- Initializes change tracking
+- Caches frequently used data
+
+#### CloseScoreUseCase
+**Purpose**: Close editor for Score with proper cleanup and save
+
+**Input Parameters:**
+- sessionId: UUID
+- saveChanges: Bool
+
+**Business Rules:**
+- Must save or discard all pending changes
+- Must release editing locks
+- Must cleanup layout caches
+- Must finalize undo/redo history
+
+**Implementation:**
+```
+execute(sessionId, saveChanges) -> Void
+├── Validate editing session exists
+├── Save or discard pending changes based on flag
+├── Finalize layout calculations if saved
+├── Release editing locks
+├── Clear layout caches for session
+├── Cleanup undo/redo history
+└── Publish ScoreClosedEvent
+```
+
+#### CreateTuneUseCase
+**Purpose**: Create and insert a new Tune in a Score
+
+**Input Parameters:**
+- scoreId: UUID
+- insertPosition: Int
+- tuneTemplate: TuneTemplate
+- layoutPreference: TuneLayoutPreference?
+
+**Business Rules:**
+- Insert position must be valid (0 to tunes.count)
+- New tune gets default instruments from score
+- Layout preference inherits from document if not specified
+- Must trigger pagination recalculation
+
+**Implementation:**
+```
+execute(scoreId, position, template, layoutPref) -> Tune
+├── Validate score exists and is editable
+├── Validate insert position
+├── Create Tune from template
+├── Set layout preference (inherit or use provided)
+├── Insert tune at specified position
+├── Update Pages[] structure for new tune
+├── Trigger pagination recalculation
+├── Save score
+└── Return created Tune
+```
+
+**Side Effects:**
+- Updates Pages[] assignment structure
+- Triggers layout recalculation
+- May affect page breaks for subsequent tunes
+- Updates navigation elements
+
+#### DeleteTuneUseCase
+**Purpose**: Delete a Tune from the Score with layout cleanup
+
+**Input Parameters:**
+- scoreId: UUID
+- tuneId: UUID
+
+**Business Rules:**
+- Cannot delete the last remaining tune in score
+- Must cleanup all associated layout data
+- Must update Pages[] structure
+- Must preserve musical integrity of remaining tunes
+
+**Implementation:**
+```
+execute(scoreId, tuneId) -> Void
+├── Validate score has multiple tunes
+├── Validate tune exists in score
+├── Remove tune from score
+├── Clear layout cache for tune's systems
+├── Update Pages[] structure removing tune's TuneLines
+├── Trigger pagination recalculation for affected pages
+├── Save score
+└── Publish TuneDeletedEvent
+```
+
+#### InsertInstrumentInTuneUseCase
+**Purpose**: Insert an Instrument in a Tune with proper system layout updates
+
+**Input Parameters:**
+- tuneId: UUID
+- instrumentType: InstrumentType
+- insertPosition: Int
+
+**Business Rules:**
+- Instrument must be compatible with existing instruments
+- Insert position within valid range (0 to instruments.count)
+- Must add instrument to all systems in tune
+- Must trigger system layout recalculation
+
+**Implementation:**
+```
+execute(tuneId, instrumentType, position) -> Void
+├── Validate tune exists and is editable
+├── Validate instrument compatibility
+├── Validate insert position
+├── Add instrument to all systems in tune
+├── Create default measures for new instrument
+├── Update system layout cache
+├── Trigger system layout recalculation
+├── Save changes
+└── Publish InstrumentAddedEvent
+```
+
+**Side Effects:**
+- Updates all MusicalSystem entities in tune
+- Recalculates staff spacing and positions
+- May affect page layout if system height changes
+- Updates instrument-specific layout caches
+
+#### RemoveInstrumentFromTuneUseCase
+**Purpose**: Remove an Instrument from a Tune with cleanup
+
+**Input Parameters:**
+- tuneId: UUID
+- instrumentType: InstrumentType
+
+**Business Rules:**
+- Cannot remove last remaining instrument
+- Must remove from all systems in tune
+- Must cleanup associated layout data
+- Must preserve synchronization of remaining instruments
+
+**Implementation:**
+```
+execute(tuneId, instrumentType) -> Void
+├── Validate tune has multiple instruments
+├── Validate instrument exists in tune
+├── Remove instrument from all systems
+├── Clear instrument-specific layout cache
+├── Update system layout for remaining instruments
+├── Trigger system layout recalculation
+├── Save changes
+└── Publish InstrumentRemovedEvent
+```
+
+#### HideInstrumentUseCase / ShowInstrumentUseCase
+**Purpose**: Toggle instrument visibility without removing musical content
+
+**Input Parameters:**
+- tuneId: UUID
+- instrumentType: InstrumentType
+- visibility: Bool
+
+**Business Rules:**
+- Hidden instruments retain musical content
+- Layout calculations exclude hidden instruments
+- At least one instrument must remain visible
+- Hidden state persists with score
+
+**Implementation:**
+```
+execute(tuneId, instrumentType, visibility) -> Void
+├── Validate at least one instrument remains visible
+├── Update instrument visibility flag
+├── Update system layout calculations
+├── Trigger layout recalculation for affected systems
+├── Save changes
+└── Publish InstrumentVisibilityChangedEvent
+```
+
+### 3.2.3 Part Management Use Cases
+
+#### CreatePartUseCase
+**Purpose**: Create and insert a new Part in a Tune
+
+**Input Parameters:**
+- tuneId: UUID
+- partLetter: String
+- insertPosition: Int
+- partTemplate: PartTemplate?
+
+**Business Rules:**
+- Part letters should be unique within tune (A, B, C, etc.)
+- Insert position must be valid
+- New part inherits instruments from tune
+- Gets default number of measures based on template
+
+**Implementation:**
+```
+execute(tuneId, letter, position, template) -> Part
+├── Validate tune exists and is editable
+├── Validate part letter uniqueness
+├── Validate insert position
+├── Create Part with systems for all tune instruments
+├── Add default measures based on template
+├── Insert part at specified position
+├── Update TuneLines structure
+├── Trigger pagination recalculation
+├── Save changes
+└── Return created Part
+```
+
+#### SelectPartsUseCase
+**Purpose**: Mark one or more Parts as selected for batch operations
+
+**Input Parameters:**
+- partIds: [UUID]
+- selectionMode: SelectionMode
+
+**Business Rules:**
+- Selected parts must be within same tune
+- Selection enables copy/cut/delete operations
+- Selection state is transient
+
+**Implementation:**
+```
+execute(partIds, mode) -> PartSelection
+├── Validate all parts exist and are in same tune
+├── Apply selection mode to current selection
+├── Validate selection constraints
+├── Update part selection state
+└── Publish PartSelectionChangedEvent
+```
+
+#### CopySelectedPartsUseCase
+**Purpose**: Copy selected Parts to the Clipboard for paste operations
+
+**Input Parameters:**
+- partSelection: PartSelection
+
+**Business Rules:**
+- Copies complete part structure including all instruments
+- Maintains relative timing and layout hints
+- Clipboard content has expiration time
+- Does not affect source parts
+
+**Implementation:**
+```
+execute(partSelection) -> ClipboardContent
+├── Validate parts are selected
+├── Deep copy selected parts with all content
+├── Preserve layout hints and preferences
+├── Create clipboard content with metadata
+├── Set clipboard expiration time
+├── Store in clipboard repository
+└── Publish PartscopiedEvent
+```
+
+#### PasteSelectedPartsUseCase
+**Purpose**: Insert Parts from Clipboard into current Tune
+
+**Input Parameters:**
+- tuneId: UUID
+- insertPosition: Int
+- pasteMode: PasteMode (copy, move, reference)
+
+**Business Rules:**
+- Clipboard content must be compatible with target tune
+- Instrument compatibility must be verified
+- Pasted parts get new UUIDs
+- Layout hints adapted to target context
+
+**Implementation:**
+```
+execute(tuneId, position, mode) -> [Part]
+├── Validate clipboard has compatible content
+├── Validate insert position
+├── Check instrument compatibility
+├── Create new parts with fresh UUIDs
+├── Adapt layout hints to target tune context
+├── Insert parts at specified position
+├── Update TuneLines structure
+├── Trigger pagination recalculation
+├── Save changes
+└── Return pasted parts
+```
+
+### 3.2.4 Measure and Bar Management Use Cases
+
+#### CreateBarUseCase
+**Purpose**: Create and insert a new Bar (Measure) in a Part
+
+**Input Parameters:**
+- partId: UUID
+- systemId: UUID
+- insertPosition: Int
+- timeSignature: TimeSignature?
+
+**Business Rules:**
+- New measure inherits time signature from previous or uses provided
+- Must be added to all instruments in system simultaneously
+- Gets default note content based on time signature
+- Triggers layout recalculation for affected systems
+
+**Implementation:**
+```
+execute(partId, systemId, position, timeSig) -> Measure
+├── Validate part and system exist
+├── Validate insert position
+├── Determine effective time signature
+├── Create measure for each instrument in system
+├── Add default content (rests) based on time signature
+├── Insert measures at specified position
+├── Update system layout cache
+├── Trigger layout recalculation
+├── Save changes
+└── Return created measure
+```
+
+#### DeleteBarUseCase
+**Purpose**: Delete selected measure(s) with proper synchronization
+
+**Input Parameters:**
+- measureIds: [UUID]
+- confirmDeletion: Bool
+
+**Business Rules:**
+- Cannot delete last measure in part
+- Must delete from all instruments simultaneously
+- Must preserve musical timing of remaining measures
+- Confirmation required for non-empty measures
+
+**Implementation:**
+```
+execute(measureIds, confirm) -> Void
+├── Validate measures exist and are deletable
+├── Check if measures contain content and require confirmation
+├── Validate not deleting last measures in part
+├── Remove measures from all affected instruments
+├── Update system layout cache
+├── Trigger layout recalculation for affected systems
+├── Save changes
+└── Publish MeasuresDeletedEvent
+```
+
+#### SetBarTimeSigUseCase
+**Purpose**: Set time signature for measure with cascading effects
+
+**Input Parameters:**
+- measureId: UUID
+- timeSignature: TimeSignature
+- applyToSubsequent: Bool
+
+**Business Rules:**
+- Time signature change affects current and subsequent measures if specified
+- Must validate existing note content fits new time signature
+- May require layout recalculation due to spacing changes
+- Cascading application stops at next explicit time signature
+
+**Implementation:**
+```
+execute(measureId, timeSig, cascade) -> AffectedMeasures
+├── Validate measure exists and is editable
+├── Validate note content compatibility with new time signature
+├── Apply time signature to target measure
+├── If cascading, apply to subsequent measures until next explicit signature
+├── Update layout cache for affected measures
+├── Trigger layout recalculation for spacing changes
+├── Save changes
+├── Return list of affected measures
+└── Publish TimeSignatureChangedEvent
+```
+
+**Side Effects:**
+- May trigger pagination recalculation if spacing changes significantly
+- Updates measure width calculations
+- May affect system break positions
+
+#### SetBarOpeningBarLineUseCase / SetBarClosingBarLineUseCase
+**Purpose**: Set barline type at measure boundaries
+
+**Input Parameters:**
+- measureId: UUID
+- barlineType: BarlineType
+- position: BarlinePosition (opening/closing)
+
+**Business Rules:**
+- Barline must be compatible with musical context
+- Repeat barlines require proper pairing
+- System-spanning barlines affect all instruments
+- Layout recalculation may be needed for barline spacing
+
+**Implementation:**
+```
+execute(measureId, barlineType, position) -> Void
+├── Validate measure exists and is editable
+├── Validate barline type compatibility
+├── Check repeat barline pairing if applicable
+├── Set barline on measure
+├── Update barline layout cache
+├── Trigger layout recalculation if spacing affected
+├── Save changes
+└── Publish BarlineChangedEvent
+```
+
+### 3.2.5 Layout and Pagination Use Cases
+
+#### RecalculatePaginationUseCase
+**Purpose**: Recalculate document pagination when layout-affecting changes occur
+
+**Input Parameters:**
+- documentId: UUID
+- scope: RecalculationScope (measure, system, page, document)
+- trigger: RecalculationTrigger
+
+**Business Rules:**
+- Scope determines extent of recalculation needed
+- Must preserve user layout preferences where possible
+- Must respect orientation-based page break rules
+- Must maintain musical phrase integrity
+
+**Implementation:**
+```
+execute(documentId, scope, trigger) -> PaginationResult
+├── Validate document exists
+├── Determine recalculation scope based on trigger type
+├── Load layout preferences and constraints
+├── Calculate new layout within scope
+├── Update Pages[] structure with new TuneLines assignments
+├── Validate musical phrase preservation
+├── Apply orientation-based page break rules
+├── Cache new layout calculations
+├── Save updated pagination
+└── Return pagination result with change summary
+```
+
+**Trigger Types:**
+- Font size change (document scope)
+- Paper size change (document scope) 
+- Instrument addition (system scope)
+- Note spacing change (measure scope)
+- Orientation change (page scope)
+
+#### SetTuneLayoutPreferenceUseCase
+**Purpose**: Set layout preferences for specific tune
+
+**Input Parameters:**
+- tuneId: UUID
+- layoutPreference: TuneLayoutPreference
+
+**Business Rules:**
+- Preference must be compatible with tune content
+- Changes may trigger pagination recalculation
+- Preferences persist with document
+- Must validate against document-level constraints
+
+**Implementation:**
+```
+execute(tuneId, preference) -> Void
+├── Validate tune exists
+├── Validate preference compatibility with tune content
+├── Check conflicts with document-level constraints
+├── Update tune layout preference
+├── Trigger pagination recalculation if layout-affecting
+├── Save preference changes
+└── Publish LayoutPreferenceChangedEvent
+```
+
+#### OptimizeLayoutUseCase
+**Purpose**: Intelligent optimization of layout for readability and space efficiency
+
+**Input Parameters:**
+- documentId: UUID
+- optimizationCriteria: OptimizationCriteria
+- scope: OptimizationScope
+
+**Business Rules:**
+- Must respect user-specified layout preferences
+- Must maintain musical integrity and readability
+- Optimization cannot violate musical phrase boundaries
+- Must consider performance vs practice context
+
+**Implementation:**
+```
+execute(documentId, criteria, scope) -> OptimizationResult
+├── Analyze current layout efficiency
+├── Identify optimization opportunities within scope
+├── Apply optimization algorithms respecting constraints
+├── Validate musical phrase preservation
+├── Calculate new optimal layout
+├── Update layout caches
+├── Generate optimization report
+├── Save optimized layout
+└── Return optimization result
+```
+
+### 3.2.6 Audio Integration Use Cases
+
+#### RecordPracticeSessionUseCase
+**Purpose**: Capture and store practice recordings linked to score
+
+**Input Parameters:**
+- scoreId: UUID
+- recordingSettings: AudioRecordingSettings
+- linkedToTune: UUID?
+
+**Business Rules:**
+- Recording must be linked to specific score
+- Audio format must be platform-compatible
+- Metadata includes tempo, key, and performance notes
+- Storage location respects user privacy settings
+
+**Implementation:**
+```
+execute(scoreId, settings, tuneId) -> PracticeRecording
+├── Validate score exists and is accessible
+├── Setup audio recording with specified settings
+├── Begin recording session
+├── Monitor audio levels and quality
+├── Stop recording on user command
+├── Process and compress audio file
+├── Create recording metadata with score linkage
+├── Save recording to designated storage
+└── Return practice recording reference
+```
+
+#### PlayMetronomeUseCase
+**Purpose**: Generate precise metronome based on time signature and tempo
+
+**Input Parameters:**
+- tempo: BPM
+- timeSignature: TimeSignature
+- accentPattern: AccentPattern?
+- duration: TimeInterval?
+
+**Business Rules:**
+- Metronome timing must be sample-accurate
+- Accent pattern must align with time signature
+- Audio must not interfere with recording
+- Tempo changes must be smooth
+
+**Implementation:**
+```
+execute(tempo, timeSig, pattern, duration) -> MetronomeSession
+├── Validate tempo and time signature parameters
+├── Setup audio engine for metronome generation
+├── Calculate beat timing and accent pattern
+├── Generate audio samples for click sounds
+├── Start metronome playback
+├── Monitor for tempo changes or stop commands
+├── Cleanup audio resources on completion
+└── Return metronome session reference
+```
+
+#### AnalyzeIntonationUseCase
+**Purpose**: Pitch detection and tuning feedback for practice
+
+**Input Parameters:**
+- audioData: AudioBuffer
+- targetPitches: [Pitch]
+- instrumentType: InstrumentType
+
+**Business Rules:**
+- Analysis must account for instrument characteristics
+- Pitch detection accuracy depends on audio quality
+- Feedback must be musically meaningful
+- Results should guide practice improvement
+
+**Implementation:**
+```
+execute(audioData, targets, instrument) -> IntonationAnalysis
+├── Validate audio data quality and format
+├── Apply instrument-specific analysis parameters
+├── Perform pitch detection on audio samples
+├── Compare detected pitches with targets
+├── Calculate intonation accuracy metrics
+├── Generate practice feedback recommendations
+├── Store analysis results for progress tracking
+└── Return intonation analysis report
+```
+
+### 3.2.7 Export and File Format Use Cases
+
+#### ExportToPDFUseCase
+**Purpose**: Render score to PDF with SMuFL compliance and layout preservation
+
+**Input Parameters:**
+- documentId: UUID
+- exportSettings: PDFExportSettings
+- pageRange: PageRange?
+
+**Business Rules:**
+- PDF must embed SMuFL fonts for compatibility
+- Layout must match screen rendering exactly
+- Metadata must include title, composer, copyright
+- Vector graphics ensure scalability
+
+**Implementation:**
+```
+execute(documentId, settings, pageRange) -> PDFExportResult
+├── Validate document exists and is accessible
+├── Load complete document with layout data
+├── Setup PDF generation context with embedded fonts
+├── Render each page maintaining layout fidelity
+├── Include metadata and copyright information
+├── Optimize PDF for target use case (print/screen)
+├── Save PDF to specified location
+└── Return export result with file reference
+```
+
+#### BatchExportUseCase
+**Purpose**: Process multiple scores with various formats efficiently
+
+**Input Parameters:**
+- scoreIds: [UUID]
+- exportFormats: [ExportFormat]
+- exportSettings: BatchExportSettings
+
+**Business Rules:**
+- Batch processing must handle errors gracefully
+- Progress reporting must be accurate
+- File naming must avoid conflicts
+- Memory usage must be optimized for large batches
+
+**Implementation:**
+```
+execute(scoreIds, formats, settings) -> BatchExportResult
+├── Validate all scores exist and are accessible
+├── Setup batch processing queue
+├── For each score and format combination:
+│   ├── Load score with layout
+│   ├── Export to specified format
+│   ├── Handle errors without stopping batch
+│   └── Update progress reporting
+├── Compile batch results and error reports
+├── Cleanup temporary resources
+└── Return batch export result
+```
+
+### 3.2.8 Synchronization Use Cases
+
+#### SyncToCloudUseCase
+**Purpose**: Upload changes to user's chosen cloud provider
+
+**Input Parameters:**
+- documentId: UUID
+- syncMode: SyncMode (full, incremental, conflict-resolution)
+- cloudProvider: CloudProvider
+
+**Business Rules:**
+- Sync must preserve document integrity
+- Conflicts must be detected and reported
+- Partial sync failures must be recoverable
+- User privacy settings must be respected
+
+**Implementation:**
+```
+execute(documentId, mode, provider) -> SyncResult
+├── Validate document and cloud provider access
+├── Determine changes since last sync
+├── Prepare sync package with change metadata
+├── Upload changes to cloud provider
+├── Handle network interruptions gracefully
+├── Verify upload integrity
+├── Update local sync status
+├── Resolve any conflicts detected
+└── Return sync result with status
+```
+
+#### ResolveConflictsUseCase
+**Purpose**: Merge concurrent edits with conflict resolution
+
+**Input Parameters:**
+- documentId: UUID
+- conflictResolutionStrategy: ResolutionStrategy
+- userChoices: [ConflictChoice]?
+
+**Business Rules:**
+- Musical integrity must be preserved during merge
+- User must approve significant changes
+- Backup created before applying resolution
+- Audit trail maintained for all changes
+
+**Implementation:**
+```
+execute(documentId, strategy, choices) -> ConflictResolution
+├── Analyze conflicts and their scope
+├── Create backup of current document state
+├── Apply automatic resolution where safe
+├── Present user choices for complex conflicts
+├── Apply user-selected resolutions
+├── Validate musical integrity of merged result
+├── Save resolved document
+├── Update audit trail
+└── Return conflict resolution summary
+```
+
+## 3.3 Repository Interfaces
+
+### 3.3.1 Core Data Repositories
+
+#### MusicalDocumentRepository
+**Purpose**: Unified repository for complete musical documents with embedded layout data
+
+**Interface Definition:**
+```
+MusicalDocumentRepository
+├── save(MusicalDocument) -> SaveResult
+├── load(UUID) -> MusicalDocument?
+├── delete(UUID) -> DeleteResult
+├── exists(UUID) -> Bool
+├── search(SearchCriteria) -> [DocumentSummary]
+├── getMetadata(UUID) -> DocumentMetadata?
+├── saveMetadata(UUID, DocumentMetadata) -> SaveResult
+├── listDocuments(FolderID?) -> [DocumentSummary]
+├── moveDocument(UUID, FolderID) -> MoveResult
+└── validateDocument(UUID) -> [ValidationError]
+```
+
+**Implementation Requirements:**
+- Support for JSON serialization with embedded layout data
+- Atomic save operations with rollback capability
+- Concurrent access protection with appropriate locking
+- Version tracking for document changes
+- Efficient partial loading for large documents
+- Platform-specific storage optimization (Core Data, Room, etc.)
+
+**Error Handling:**
+- DocumentNotFoundError
+- DocumentCorruptedError
+- ConcurrentModificationError
+- InsufficientStorageError
+- SerializationError
+
+#### TuneRepository
+**Purpose**: Specialized repository for individual tune operations and queries
+
+**Interface Definition:**
+```
+TuneRepository
+├── saveTune(Tune) -> SaveResult
+├── loadTune(UUID) -> Tune?
+├── deleteTune(UUID) -> DeleteResult
+├── getTunesByType(TuneType) -> [Tune]
+├── getTunesByInstrument(InstrumentType) -> [Tune]
+├── searchTunes(SearchCriteria) -> [TuneSummary]
+├── getTuneMetadata(UUID) -> TuneMetadata?
+├── updateTuneMetadata(UUID, TuneMetadata) -> SaveResult
+├── getTunesInDateRange(DateRange) -> [TuneSummary]
+└── validateTune(UUID) -> [ValidationError]
+```
+
+**Advanced Query Capabilities:**
+- Full-text search across tune titles and composers
+- Musical characteristic filtering (key, time signature, tempo)
+- Layout preference matching
+- Difficulty level categorization
+- Geographic origin classification
+
+#### FolderRepository
+**Purpose**: Hierarchical organization and management of musical documents
+
+**Interface Definition:**
+```
+FolderRepository
+├── createFolder(name: String, parentID: UUID?) -> Folder
+├── deleteFolder(UUID) -> DeleteResult
+├── moveFolder(UUID, newParentID: UUID?) -> MoveResult
+├── renameFolder(UUID, newName: String) -> RenameResult
+├── getFolderContents(UUID) -> FolderContents
+├── getFolderHierarchy(UUID?) -> FolderTree
+├── searchFolders(name: String) -> [Folder]
+├── getFolderPath(UUID) -> [Folder]
+├── validateFolderOperation(FolderOperation) -> [ValidationError]
+└── optimizeFolderStructure() -> OptimizationResult
+```
+
+**Business Logic Integration:**
+- Maximum depth enforcement (5 levels)
+- Circular reference prevention
+- Name uniqueness within parent folder
+- Cascade deletion with user confirmation
+- Folder sorting and display order management
+
+### 3.3.2 Layout and Cache Repositories
+
+#### LayoutCacheRepository
+**Purpose**: High-performance caching of calculated layout data
+
+**Interface Definition:**
+```
+LayoutCacheRepository
+├── cacheSystemLayout(UUID, SystemLayout) -> CacheResult
+├── getCachedSystemLayout(UUID) -> SystemLayout?
+├── cacheMeasureLayout(UUID, MeasureLayout) -> CacheResult
+├── getCachedMeasureLayout(UUID) -> MeasureLayout?
+├── cachePageLayout(UUID, PageLayout) -> CacheResult
+├── getCachedPageLayout(UUID) -> PageLayout?
+├── invalidateLayoutCache([UUID]) -> InvalidationResult
+├── invalidateLayoutCacheForDocument(UUID) -> InvalidationResult
+├── clearLayoutCache() -> ClearResult
+├── getCacheStatistics() -> CacheStatistics
+├── optimizeCache() -> OptimizationResult
+└── setCachePolicy(CachePolicy) -> PolicyResult
+```
+
+**Performance Requirements:**
+- Sub-millisecond cache lookup times
+- LRU eviction policy with configurable size limits
+- Memory pressure handling with automatic cleanup
+- Cache hit ratio monitoring and optimization
+- Thread-safe concurrent access patterns
+- Platform-specific memory management integration
+
+**Cache Invalidation Strategies:**
+- Dependency-based invalidation (measure changes invalidate system)
+- Time-based expiration for layout calculations
+- Version-based invalidation using entity timestamps
+- Manual invalidation for user-triggered layout changes
+- Batch invalidation for efficient bulk operations
+
+#### LayoutPreferenceRepository
+**Purpose**: Persistent storage of user layout preferences and document settings
+
+**Interface Definition:**
+```
+LayoutPreferenceRepository
+├── saveDocumentLayoutSettings(UUID, DocumentLayoutSettings) -> SaveResult
+├── loadDocumentLayoutSettings(UUID) -> DocumentLayoutSettings?
+├── saveTuneLayoutPreference(UUID, TuneLayoutPreference) -> SaveResult
+├── loadTuneLayoutPreference(UUID) -> TuneLayoutPreference?
+├── saveGlobalLayoutDefaults(GlobalLayoutDefaults) -> SaveResult
+├── loadGlobalLayoutDefaults() -> GlobalLayoutDefaults
+├── saveUserLayoutProfile(UserLayoutProfile) -> SaveResult
+├── loadUserLayoutProfile() -> UserLayoutProfile?
+├── exportLayoutPreferences() -> LayoutPreferenceExport
+├── importLayoutPreferences(LayoutPreferenceExport) -> ImportResult
+└── resetLayoutPreferences(ResetScope) -> ResetResult
+```
+
+**Preference Hierarchy Management:**
+- Global defaults → Document defaults → Tune overrides
+- User profile preferences with theme support
+- Context-specific preferences (performance vs practice)
+- Regional and cultural preference variations
+- Accessibility-driven layout adaptations
+
+### 3.3.3 Audio and Media Repositories
+
+#### AudioRepository
+**Purpose**: Management of practice recordings and audio analysis data
+
+**Interface Definition:**
+```
+AudioRepository
+├── saveRecording(PracticeRecording) -> SaveResult
+├── loadRecording(UUID) -> PracticeRecording?
+├── deleteRecording(UUID) -> DeleteResult
+├── getRecordingsForScore(UUID) -> [PracticeRecording]
+├── getRecordingsForTune(UUID) -> [PracticeRecording]
+├── getRecordingsByDateRange(DateRange) -> [PracticeRecording]
+├── saveAudioAnalysis(UUID, AudioAnalysis) -> SaveResult
+├── loadAudioAnalysis(UUID) -> AudioAnalysis?
+├── compressAudioFile(UUID, CompressionSettings) -> CompressionResult
+├── exportRecording(UUID, ExportFormat) -> ExportResult
+├── getAudioStatistics() -> AudioStatistics
+└── cleanupExpiredRecordings() -> CleanupResult
+```
+
+**Audio Processing Integration:**
+- Platform-specific audio format optimization
+- Automatic compression and quality management
+- Metadata embedding with musical context
+- Progress tracking for long operations
+- Background processing for non-critical operations
+
+#### CloudStorageRepository
+**Purpose**: Abstract interface for various cloud storage providers
+
+**Interface Definition:**
+```
+CloudStorageRepository
+├── uploadDocument(UUID, CloudPath) -> UploadResult
+├── downloadDocument(CloudPath) -> DownloadResult
+├── deleteCloudDocument(CloudPath) -> DeleteResult
+├── listCloudDocuments(CloudDirectory) -> [CloudFile]
+├── syncDocument(UUID, SyncStrategy) -> SyncResult
+├── resolveConflicts(UUID, ConflictResolution) -> ResolutionResult
+├── getCloudQuota() -> QuotaInfo
+├── getCloudSyncStatus(UUID) -> SyncStatus
+├── configureCloudProvider(CloudProviderConfig) -> ConfigResult
+├── validateCloudConnection() -> ConnectionStatus
+└── cleanupCloudStorage() -> CleanupResult
+```
+
+**Multi-Provider Support:**
+- Provider-agnostic interface implementation
+- Automatic provider selection based on availability
+- Conflict resolution with user intervention
+- Offline queuing with automatic sync retry
+- Bandwidth optimization and progress tracking
+
+### 3.3.4 Export and Import Repositories
+
+#### ExportRepository
+**Purpose**: Multi-format export with layout preservation and platform optimization
+
+**Interface Definition:**
+```
+ExportRepository
+├── exportToPDF(UUID, PDFExportSettings) -> ExportResult
+├── exportToPNG(UUID, ImageExportSettings) -> ExportResult
+├── exportToSVG(UUID, SVGExportSettings) -> ExportResult
+├── exportToMIDI(UUID, MIDIExportSettings) -> ExportResult
+├── exportToMusicXML(UUID, MusicXMLExportSettings) -> ExportResult
+├── batchExport([UUID], BatchExportSettings) -> BatchExportResult
+├── getExportFormats() -> [ExportFormat]
+├── validateExportSettings(ExportSettings) -> [ValidationError]
+├── getExportProgress(UUID) -> ExportProgress
+├── cancelExport(UUID) -> CancelResult
+└── optimizeExportSettings(ExportContext) -> OptimizedSettings
+```
+
+**Quality Assurance:**
+- Layout consistency validation across formats
+- SMuFL font embedding verification
+- Color profile management for print output
+- Resolution optimization for target devices
+- Metadata preservation across format conversions
+
+### 3.3.5 Repository Implementation Patterns
+
+#### Base Repository Interface
+**Purpose**: Common functionality and patterns for all repository implementations
+
+**Interface Definition:**
+```
+BaseRepository<T>
+├── validateEntity(T) -> [ValidationError]
+├── getEntityVersion(UUID) -> EntityVersion
+├── lockEntity(UUID, LockType) -> LockResult
+├── unlockEntity(UUID) -> UnlockResult
+├── getEntityLockStatus(UUID) -> LockStatus
+├── beginTransaction() -> Transaction
+├── commitTransaction(Transaction) -> CommitResult
+├── rollbackTransaction(Transaction) -> RollbackResult
+├── getRepositoryHealth() -> HealthStatus
+└── optimizeRepository() -> OptimizationResult
+```
+
+**Cross-Cutting Concerns:**
+- Audit trail logging for all repository operations
+- Performance monitoring and metrics collection
+- Error logging with contextual information
+- Transaction management with nested transaction support
+- Entity validation with business rule enforcement
+
+## 3.4 Domain Services
+
+### 3.4.1 Layout Calculation Services
+
+#### LayoutCoordinationService
+**Purpose**: Coordinate layout calculations across different scopes and triggers
+
+**Service Interface:**
+```
+LayoutCoordinationService
+├── calculateDocumentLayout(UUID, LayoutContext) -> DocumentLayoutResult
+├── calculatePageLayout(UUID, PageLayoutContext) -> PageLayoutResult
+├── calculateSystemLayout(UUID, SystemLayoutContext) -> SystemLayoutResult
+├── calculateMeasureLayout(UUID, MeasureLayoutContext) -> MeasureLayoutResult
+├── optimizeLayoutForContext(UUID, OptimizationContext) -> OptimizationResult
+├── validateLayoutIntegrity(UUID) -> [ValidationError]
+├── previewLayoutChanges(UUID, LayoutChanges) -> LayoutPreview
+├── applyLayoutChanges(UUID, LayoutChanges) -> LayoutResult
+├── getLayoutMetrics(UUID) -> LayoutMetrics
+└── estimateLayoutCalculationTime(LayoutScope) -> TimeEstimate
+```
+
+**Coordination Logic:**
+- Dependency analysis for efficient recalculation ordering
+- Parallel calculation of independent layout regions
+- Cache invalidation with minimal scope impact
+- Progressive enhancement for incremental updates
+- Rollback capability for failed layout operations
+
+#### PaginationService
+**Purpose**: Intelligent pagination with musical phrase awareness
+
+**Service Interface:**
+```
+PaginationService
+├── calculatePagination(UUID, PaginationContext) -> PaginationResult
+├── optimizePageBreaks(UUID, OptimizationCriteria) -> PageBreakResult
+├── validatePageBreaks(UUID) -> [ValidationError]
+├── previewPaginationChanges(UUID, PaginationChanges) -> PaginationPreview
+├── applyPaginationChanges(UUID, PaginationChanges) -> PaginationResult
+├── getPageCapacity(PageDimensions, ContentType) -> CapacityInfo
+├── analyzeMusicianPhrasing(UUID) -> PhrasingAnalysis
+├── suggestOptimalBreaks(UUID, BreakCriteria) -> [BreakSuggestion]
+├── handleOrientationChanges(UUID, OrientationChanges) -> OrientationResult
+└── generatePaginationReport(UUID) -> PaginationReport
+```
+
+**Musical Intelligence:**
+- Phrase boundary detection and preservation
+- Part transition optimization for page breaks
+- Rehearsal mark and section break consideration
+- Instrument ensemble synchronization requirements
+- Performance context adaptation (solo vs ensemble)
+
+### 3.4.2 Musical Analysis Services
+
+#### MusicalValidationService
+**Purpose**: Comprehensive validation of musical content and structure
+
+**Service Interface:**
+```
+MusicalValidationService
+├── validateMusicalDocument(UUID) -> [ValidationError]
+├── validateTune(UUID) -> [ValidationError]
+├── validatePart(UUID) -> [ValidationError]
+├── validateMusicalSystem(UUID) -> [ValidationError]
+├── validateMeasure(UUID) -> [ValidationError]
+├── validateTimeSignatureConsistency(UUID) -> [ValidationError]
+├── validateKeySignaturePropagation(UUID) -> [ValidationError]
+├── validateInstrumentCompatibility(UUID) -> [ValidationError]
+├── validateOrnamentPlacement(UUID) -> [ValidationError]
+├── validateBarlineSequence(UUID) -> [ValidationError]
+├── suggestMusicalImprovements(UUID) -> [ImprovementSuggestion]
+└── generateValidationReport(UUID) -> ValidationReport
+```
+
+**Validation Categories:**
+- Musical theory compliance (time signatures, key relationships)
+- Instrument-specific notation correctness
+- Ensemble synchronization requirements
+- Performance practicality assessment
+- Regional style convention adherence
+
+#### OrnamentAnalysisService
+**Purpose**: Context-aware ornament analysis and suggestion system
+
+**Service Interface:**
+```
+OrnamentAnalysisService
+├── analyzeOrnamentPlacement(UUID) -> OrnamentAnalysis
+├── suggestOrnamentVariations(UUID, StyleContext) -> [OrnamentSuggestion]
+├── validateOrnamentCompatibility(UUID) -> [ValidationError]
+├── optimizeOrnamentSpacing(UUID) -> SpacingOptimization
+├── analyzeOrnamentComplexity(UUID) -> ComplexityAnalysis
+├── compareOrnamentStyles([RegionalStyle]) -> StyleComparison
+├── generateOrnamentGuide(InstrumentType, SkillLevel) -> OrnamentGuide
+├── adaptOrnamentsForSkillLevel(UUID, SkillLevel) -> AdaptationResult
+├── detectOrnamentPatterns(UUID) -> [OrnamentPattern]
+└── exportOrnamentAnalysis(UUID, ExportFormat) -> ExportResult
+```
+
+**Cultural Sensitivity:**
+- Regional style variation recognition
+- Traditional vs modern ornament usage
+- Competition vs traditional performance contexts
+- Educational progression recommendations
+- Historical accuracy assessment
+
+### 3.4.3 Performance and Optimization Services
+
+#### CacheManagementService
+**Purpose**: Intelligent caching with performance optimization
+
+**Service Interface:**
+```
+CacheManagementService
+├── optimizeCacheStrategy(CacheUsagePattern) -> CacheStrategy
+├── preloadCacheForDocument(UUID) -> PreloadResult
+├── invalidateCacheIntelligently([UUID]) -> InvalidationResult
+├── analyzeCachePerformance() -> CachePerformanceReport
+├── adjustCacheSize(MemoryPressure) -> CacheAdjustmentResult
+├── getCacheRecommendations() -> [CacheRecommendation]
+├── warmupCacheForSession(SessionContext) -> WarmupResult
+├── cleanupStaleCacheEntries() -> CleanupResult
+├── migrateCacheFormat(CacheFormatVersion) -> MigrationResult
+└── generateCacheReport() -> CacheReport
+```
+
+**Performance Optimization:**
+- Predictive cache preloading based on user behavior
+- Memory pressure response with intelligent eviction
+- Cache hit ratio optimization through usage analysis
+- Platform-specific cache tuning parameters
+- Background cache maintenance operations
+
+#### PerformanceMonitoringService
+**Purpose**: System performance monitoring and optimization recommendations
+
+**Service Interface:**
+```
+PerformanceMonitoringService
+├── monitorLayoutPerformance(OperationType) -> PerformanceMetrics
+├── analyzeBottlenecks() -> [PerformanceBottleneck]
+├── generatePerformanceReport() -> PerformanceReport
+├── optimizePerformanceSettings() -> OptimizationResult
+├── predictPerformanceImpact(OperationType) -> PerformanceImpact
+├── trackUserExperienceMetrics() -> UXMetrics
+├── identifyPerformanceRegressions() -> [PerformanceRegression]
+├── recommendPerformanceImprovements() -> [PerformanceRecommendation]
+├── monitorMemoryUsage() -> MemoryUsageReport
+└── optimizeForPlatform(PlatformType) -> PlatformOptimization
+```
+
+**Metrics Collection:**
+- Layout calculation timing and complexity
+- Memory usage patterns and peak consumption
+- User interaction response times
+- Cache effectiveness and hit ratios
+- Platform-specific performance characteristics
+
+### 3.4.4 Collaboration Services
+
+#### ConflictResolutionService
+**Purpose**: Intelligent conflict resolution for collaborative editing
+
+**Service Interface:**
+```
+ConflictResolutionService
+├── detectConflicts(UUID, ChangeSet) -> [Conflict]
+├── analyzeConflictComplexity(Conflict) -> ConflictComplexity
+├── suggestResolutionStrategies(Conflict) -> [ResolutionStrategy]
+├── applyAutomaticResolution([Conflict]) -> ResolutionResult
+├── prepareManualResolution(Conflict) -> ResolutionContext
+├── applyManualResolution(Conflict, UserChoice) -> ResolutionResult
+├── validateResolutionIntegrity(ResolutionResult) -> [ValidationError]
+├── createResolutionAuditTrail(ResolutionResult) -> AuditTrail
+├── rollbackConflictResolution(UUID) -> RollbackResult
+└── generateConflictReport([Conflict]) -> ConflictReport
+```
+
+**Resolution Strategies:**
+- Three-way merge with common ancestor analysis
+- Musical priority-based automatic resolution
+- User preference learning and application
+- Collaborative annotation and discussion support
+- Version history preservation and rollback capability
+
+#### SynchronizationService
+**Purpose**: Multi-device and cloud synchronization coordination
+
+**Service Interface:**
+```
+SynchronizationService
+├── synchronizeDocument(UUID, SyncStrategy) -> SyncResult
+├── detectSyncConflicts(UUID) -> [SyncConflict]
+├── resolveSyncConflicts(UUID, ConflictResolution) -> ResolutionResult
+├── validateSyncIntegrity(UUID) -> [ValidationError]
+├── optimizeSyncStrategy(SyncContext) -> OptimizedStrategy
+├── monitorSyncProgress(UUID) -> SyncProgress
+├── handleSyncFailure(UUID, FailureReason) -> RecoveryResult
+├── scheduleSyncOperation(UUID, SyncSchedule) -> ScheduleResult
+├── getSyncStatistics() -> SyncStatistics
+└── configureSyncBehavior(SyncConfiguration) -> ConfigResult
+```
+
+**Synchronization Intelligence:**
+- Bandwidth-aware sync optimization
+- Offline operation queuing with priority handling
+- Incremental sync with delta compression
+- Multi-device conflict prevention strategies
+- User notification and intervention protocols
+
+## 3.5 Domain Events and Integration
+
+### 3.5.1 Core Domain Events
+
+#### Musical Content Events
+**Purpose**: Notification system for musical content changes
+
+**Event Definitions:**
+```
+ScoreCreatedEvent
+├── scoreId: UUID
+├── title: String
+├── composer: String?
+├── createdBy: UserID
+├── timestamp: Date
+└── initialLayout: DocumentLayoutSettings
+
+TuneAddedEvent
+├── scoreId: UUID
+├── tuneId: UUID
+├── insertPosition: Int
+├── tuneMetadata: TuneMetadata
+├── layoutPreference: TuneLayoutPreference?
+├── triggeredBy: UserID
+└── timestamp: Date
+
+PartCreatedEvent
+├── tuneId: UUID
+├── partId: UUID
+├── partLetter: String
+├── insertPosition: Int
+├── systemCount: Int
+├── triggeredBy: UserID
+└── timestamp: Date
+
+MeasureAddedEvent
+├── systemId: UUID
+├── measureId: UUID
+├── insertPosition: Int
+├── timeSignature: TimeSignature?
+├── affectedInstruments: [InstrumentType]
+├── triggeredBy: UserID
+└── timestamp: Date
+
+NoteModifiedEvent
+├── noteId: UUID
+├── measureId: UUID
+├── previousState: NoteState
+├── newState: NoteState
+├── layoutImpact: LayoutImpactLevel
+├── triggeredBy: UserID
+└── timestamp: Date
+```
+
+**Event Handling Patterns:**
+- Asynchronous event processing with retry capability
+- Event ordering preservation for sequential operations
+- Event aggregation for batch operations
+- Cross-platform event synchronization
+- Event persistence for audit trails and undo operations
+
+#### Layout and Pagination Events
+**Purpose**: Coordination of layout-related changes and recalculations
+
+**Event Definitions:**
+```
+LayoutPreferenceChangedEvent
+├── entityId: UUID
+├── entityType: EntityType
+├── previousPreference: LayoutPreference?
+├── newPreference: LayoutPreference
+├── affectedScope: LayoutScope
+├── recalculationRequired: Bool
+├── triggeredBy: UserID
+└── timestamp: Date
+
+PaginationRecalculatedEvent
+├── documentId: UUID
+├── affectedPages: [UUID]
+├── previousPageCount: Int
+├── newPageCount: Int
+├── changedTuneLines: [TuneLineChange]
+├── recalculationTrigger: RecalculationTrigger
+├── calculationDuration: TimeInterval
+└── timestamp: Date
+
+SystemLayoutUpdatedEvent
+├── systemId: UUID
+├── previousLayout: SystemLayout?
+├── newLayout: SystemLayout
+├── layoutChanges: [LayoutChange]
+├── affectedMeasures: [UUID]
+├── cacheInvalidationRequired: [UUID]
+└── timestamp: Date
+
+CacheInvalidatedEvent
+├── invalidatedEntities: [UUID]
+├── invalidationType: InvalidationType
+├── invalidationScope: InvalidationScope
+├── cascadeEffects: [CascadeEffect]
+├── recalculationEstimate: TimeInterval
+└── timestamp: Date
+```
+
+**Layout Event Coordination:**
+- Dependency-aware event ordering for layout calculations
+- Batch event processing for performance optimization
+- Progressive layout updates with user feedback
+- Cache invalidation coordination across event types
+- Performance impact monitoring and optimization
+
+### 3.5.2 Audio and Practice Events
+
+#### Practice Session Events
+**Purpose**: Tracking and coordination of practice-related activities
+
+**Event Definitions:**
+```
+PracticeSessionStartedEvent
+├── sessionId: UUID
+├── scoreId: UUID
+├── tuneId: UUID?
+├── practiceGoals: [PracticeGoal]
+├── sessionSettings: PracticeSettings
+├── startedBy: UserID
+└── timestamp: Date
+
+RecordingCapturedEvent
+├── recordingId: UUID
+├── sessionId: UUID
+├── scoreId: UUID
+├── tuneId: UUID?
+├── duration: TimeInterval
+├── audioQuality: AudioQualityMetrics
+├── linkedToScore: Bool
+└── timestamp: Date
+
+IntonationAnalyzedEvent
+├── analysisId: UUID
+├── recordingId: UUID
+├── targetPitches: [Pitch]
+├── detectedPitches: [Pitch]
+├── accuracyMetrics: IntonationMetrics
+├── improvementSuggestions: [ImprovementSuggestion]
+└── timestamp: Date
+
+MetronomeSessionEvent
+├── sessionId: UUID
+├── tempo: BPM
+├── timeSignature: TimeSignature
+├── duration: TimeInterval
+├── accuracyMetrics: TimingMetrics?
+└── timestamp: Date
+```
+
+#### Audio Processing Events
+**Purpose**: Coordination of audio analysis and processing operations
+
+**Event Definitions:**
+```
+AudioProcessingStartedEvent
+├── processingId: UUID
+├── audioData: AudioDataReference
+├── processingType: AudioProcessingType
+├── estimatedDuration: TimeInterval
+└── timestamp: Date
+
+AudioAnalysisCompletedEvent
+├── analysisId: UUID
+├── processingId: UUID
+├── analysisResults: AudioAnalysisResults
+├── processingDuration: TimeInterval
+├── qualityMetrics: AudioQualityMetrics
+└── timestamp: Date
+
+AudioCompressionCompletedEvent
+├── compressionId: UUID
+├── originalSize: FileSize
+├── compressedSize: FileSize
+├── compressionRatio: Float
+├── qualityLoss: AudioQualityImpact
+└── timestamp: Date
+```
+
+### 3.5.3 Synchronization and Collaboration Events
+
+#### Cloud Synchronization Events
+**Purpose**: Coordination of cloud storage operations and conflict resolution
+
+**Event Definitions:**
+```
+CloudSyncStartedEvent
+├── syncId: UUID
+├── documentId: UUID
+├── syncDirection: SyncDirection
+├── cloudProvider: CloudProvider
+├── expectedDuration: TimeInterval
+└── timestamp: Date
+
+CloudSyncCompletedEvent
+├── syncId: UUID
+├── syncResult: SyncResult
+├── conflictsDetected: [SyncConflict]
+├── bytesTransferred: Int
+├── syncDuration: TimeInterval
+└── timestamp: Date
+
+SyncConflictDetectedEvent
+├── conflictId: UUID
+├── documentId: UUID
+├── conflictType: ConflictType
+├── localVersion: EntityVersion
+├── remoteVersion: EntityVersion
+├── requiresUserIntervention: Bool
+└── timestamp: Date
+
+ConflictResolvedEvent
+├── conflictId: UUID
+├── resolutionStrategy: ResolutionStrategy
+├── resolvedBy: UserID?
+├── resolutionResult: ConflictResolutionResult
+├── auditTrailCreated: Bool
+└── timestamp: Date
+```
+
+#### Collaborative Editing Events
+**Purpose**: Real-time coordination for multi-user editing scenarios
+
+**Event Definitions:**
+```
+CollaborativeSessionStartedEvent
+├── sessionId: UUID
+├── documentId: UUID
+├── participants: [UserID]
+├── sessionSettings: CollaborationSettings
+├── lockingStrategy: LockingStrategy
+└── timestamp: Date
+
+UserJoinedSessionEvent
+├── sessionId: UUID
+├── userId: UserID
+├── userRole: CollaborationRole
+├── joinPermissions: [Permission]
+└── timestamp: Date
+
+ConcurrentEditDetectedEvent
+├── sessionId: UUID
+├── editingUsers: [UserID]
+├── conflictingOperations: [EditOperation]
+├── autoResolutionAttempted: Bool
+├── requiresModeration: Bool
+└── timestamp: Date
+
+SessionLockAcquiredEvent
+├── sessionId: UUID
+├── lockId: UUID
+├── entityId: UUID
+├── lockType: LockType
+├── acquiredBy: UserID
+├── lockDuration: TimeInterval?
+└── timestamp: Date
+```
+
+### 3.5.4 System and Performance Events
+
+#### Performance Monitoring Events
+**Purpose**: System performance tracking and optimization guidance
+
+**Event Definitions:**
+```
+PerformanceThresholdExceededEvent
+├── operationType: OperationType
+├── actualDuration: TimeInterval
+├── thresholdDuration: TimeInterval
+├── performanceImpact: PerformanceImpact
+├── optimizationSuggestions: [OptimizationSuggestion]
+└── timestamp: Date
+
+CacheEfficiencyEvent
+├── cacheType: CacheType
+├── hitRatio: Float
+├── missCount: Int
+├── totalRequests: Int
+├── recommendedActions: [CacheRecommendation]
+└── timestamp: Date
+
+MemoryPressureEvent
+├── currentMemoryUsage: MemoryUsage
+├── memoryPressureLevel: MemoryPressureLevel
+├── triggeringOperation: OperationType?
+├── recommendedActions: [MemoryOptimization]
+└── timestamp: Date
+
+LayoutCalculationPerformanceEvent
+├── calculationType: LayoutCalculationType
+├── entityCount: Int
+├── calculationDuration: TimeInterval
+├── cacheUtilization: CacheUtilization
+├── performanceRating: PerformanceRating
+└── timestamp: Date
+```
+
+#### Error and Recovery Events
+**Purpose**: Error tracking and automatic recovery coordination
+
+**Event Definitions:**
+```
+DomainErrorOccurredEvent
+├── errorId: UUID
+├── errorType: DomainErrorType
+├── entityId: UUID?
+├── errorSeverity: ErrorSeverity
+├── errorContext: ErrorContext
+├── recoveryAttempted: Bool
+├── userNotificationRequired: Bool
+└── timestamp: Date
+
+AutoRecoveryAttemptedEvent
+├── errorId: UUID
+├── recoveryStrategy: RecoveryStrategy
+├── recoveryResult: RecoveryResult
+├── dataIntegrityPreserved: Bool
+├── userInterventionRequired: Bool
+└── timestamp: Date
+
+DataIntegrityValidationEvent
+├── validationId: UUID
+├── entityId: UUID
+├── validationType: ValidationType
+├── validationResult: ValidationResult
+├── integrityIssues: [IntegrityIssue]
+├── autoRepairAttempted: Bool
+└── timestamp: Date
+```
+
+### 3.5.5 Event Processing Patterns
+
+#### Event Handler Registration
+**Purpose**: Flexible event subscription and processing coordination
+
+**Registration Patterns:**
+```
+EventSubscription
+├── eventType: EventType
+├── handler: EventHandler
+├── priority: EventPriority
+├── processingMode: ProcessingMode (sync/async)
+├── errorHandling: ErrorHandlingStrategy
+├── retryPolicy: RetryPolicy?
+└── filterCriteria: EventFilterCriteria?
+
+EventHandlerChain
+├── primaryHandler: EventHandler
+├── secondaryHandlers: [EventHandler]
+├── chainBreakConditions: [BreakCondition]
+├── aggregationRules: AggregationRules?
+└── failureEscalation: EscalationPolicy
+```
+
+#### Cross-Platform Event Coordination
+**Purpose**: Consistent event processing across different platform implementations
+
+**Coordination Patterns:**
+- Event serialization for cross-platform compatibility
+- Platform-specific event adapter implementations
+- Event ordering preservation across async boundaries
+- Event persistence for offline scenario handling
+- Event replay capability for synchronization recovery
+
+**Performance Optimization:**
+- Event batching for high-frequency operations
+- Event filtering to reduce processing overhead
+- Priority-based event processing queues
+- Memory-efficient event data structures
+- Background event processing with user notification
+
 
 ## 4. Data Layer Implementation
 
