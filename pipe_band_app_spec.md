@@ -6,23 +6,26 @@ This specification outlines a cross-platform application for Scottish pipe band 
 
 ## 2. Architecture Overview
 
-### 2.1 Clean Architecture Layers
+## 2.1 Clean Architecture Layers
 
-```
-┌─────────────────────────────────────┐
-│         Presentation Layer          │
-│   (Platform UI, ViewModels/BLoC,    │
-│    Controllers, Platform-specific)  │
-├─────────────────────────────────────┤
-│           Domain Layer              │
-│  (Entities, Use Cases, Repository   │
-│    Interfaces, Value Objects)       │
-├─────────────────────────────────────┤
-│             Data Layer              │
-│ (Repository Implementations, Data   │
-│   Sources, Models, Platform APIs)   │
-└─────────────────────────────────────┘
-```
+### Presentation Layer
+- UI Components & Rendering
+- Layout Calculation Services  
+- Font Metrics & Text Rendering
+- Platform Graphics APIs
+- User Interaction Handling
+
+### Domain Layer
+- Musical Entities & Rules
+- Layout Intent & Policies
+- Business Logic Use Cases
+- Repository Interfaces
+
+### Data Layer
+- Score Persistence
+- Cloud Storage Integration
+- Audio File Management
+- Repository Implementations
 
 ### 2.2 Technology Stack by Platform
 
