@@ -26,13 +26,14 @@ This specification outlines a cross-platform application for Scottish pipe band 
 
 ### 2.2 Technology Stack by Platform
 
-#### 2.2.1 iOS/macOS Implementation
-- **Language**: Swift 5.8+ with SwiftUI/UIKit
-- **Architecture**: MVVM with Combine framework
-- **Audio Processing**: AVFoundation, AudioKit
-- **Local Storage**: Core Data with SQLite backing
-- **Music Notation**: Core Graphics with SMuFL fonts
-- **Cloud Integration**: Document Provider framework for universal cloud access
+- **Language**: Swift 6.0+ with complete concurrency enabled and strict data isolation
+- **UI Framework**: SwiftUI with UIKit/AppKit bridging where necessary
+- **Architecture**: MVVM with Swift Concurrency (async/await) and Observation framework
+- **Audio Processing**: AVFoundation with AVAudioEngine, optional AudioKit integration
+- **Local Storage**: Core Data with CloudKit integration, SQLite backing store
+- **Music Notation**: Core Graphics with Text Kit 2, SMuFL font rendering via CTFont
+- **Cloud Integration**: Document Provider framework, CloudKit for app data sync
+- **Platform Optimization**: Mac Catalyst for shared codebase with platform-specific adaptations
 
 #### 2.2.2 Android Implementation
 - **Language**: Kotlin 1.8+ with Coroutines
@@ -562,12 +563,55 @@ OrientationPageBreakRule {
 
 ### 5.1 Platform-Specific UI Patterns
 
-#### 5.1.1 iOS/macOS - SwiftUI/UIKit
-**Architecture**: MVVM with Combine for reactive programming
-**State Management**: @StateObject, @ObservableObject, @Published properties
-**Navigation**: NavigationView/NavigationStack with coordinator pattern
-**Custom Views**: SMuFL symbol rendering with Core Graphics
-**Accessibility**: VoiceOver support with proper semantic markup
+#### 5.1.1 iOS/macOS - SwiftUI with Swift 6 Concurrency
+
+**Modern Architecture Pattern:**
+- **MVVM with Observation Framework**: @Observable classes replacing ObservableObject for better performance
+- **Repository Pattern**: Protocol-based repositories with sendable Core Data implementations
+- **Coordinator Pattern**: Navigation flow management with type-safe routing and actor isolation
+- **Swift Concurrency Integration**: Actor-based data flows with MainActor UI updates and background processing
+
+**Swift 6 State Management:**
+- **@Observable**: New observation system for automatic UI updates with better performance than @Published
+- **@State**: Enhanced state management with improved compiler optimization
+- **Sendable Conformance**: Full data race safety with sendable ViewModels and data structures
+- **Actor Isolation**: MainActor for UI updates, background actors for heavy processing
+- **Strict Concurrency**: Complete data race elimination through Swift 6's enhanced type system
+
+**Advanced Concurrency Patterns:**
+- **TaskGroup Operations**: Parallel processing for pagination calculations and audio analysis
+- **AsyncSequence Integration**: Real-time audio data streaming and cloud synchronization updates
+- **Actor-based Repositories**: Thread-safe data access with isolated actor boundaries
+- **Structured Concurrency**: Proper task lifecycle management with automatic cancellation
+- **Custom AsyncSequence**: Musical event streaming for real-time collaboration features
+
+**SwiftUI Enhanced Features:**
+- **Hierarchical State**: Parent-child state relationships with proper sendable boundaries
+- **Environment Injection**: Shared services via environment with sendable requirements
+- **Custom Observation**: Domain-specific observation patterns for musical state changes
+- **ViewModifiers with Actors**: Reusable SMuFL symbol styling with thread-safe calculations
+- **Async View Loading**: Concurrent image and notation loading with structured concurrency
+
+**Platform-Specific Swift 6 Adaptations:**
+- **iOS Navigation**: NavigationStack with async deep linking and sendable route parameters
+- **macOS Navigation**: NavigationSplitView with actor-isolated sidebar state management
+- **Toolbar Management**: Sendable toolbar configurations with async state updates
+- **Keyboard Shortcuts**: Thread-safe keyboard command handling with MainActor coordination
+- **Gesture Recognition**: Concurrent gesture processing with proper actor isolation
+
+**Core Data with Swift 6:**
+- **NSPersistentCloudKitContainer**: Actor-isolated Core Data operations with sendable model objects
+- **Background Processing**: Structured concurrency for Core Data operations with proper context isolation
+- **Batch Operations**: Concurrent bulk operations using TaskGroup for large score processing
+- **Sendable Models**: Core Data model objects designed for safe cross-actor usage
+- **Migration Strategy**: Async migration processes with progress reporting through AsyncSequence
+
+**Performance and Safety:**
+- **Complete Data Race Safety**: Swift 6's strict concurrency eliminates all data races at compile time
+- **Improved Performance**: @Observable framework provides better performance than Combine-based solutions
+- **Memory Safety**: Enhanced memory management with improved ARC and actor isolation
+- **Compile-Time Guarantees**: Static analysis ensures thread safety without runtime overhead
+- **Debugging Improvements**: Better debugging experience with Swift 6's enhanced concurrency tools
 
 #### 5.1.2 Android - Jetpack Compose
 **Architecture**: MVVM with StateFlow and ViewModel
@@ -606,12 +650,49 @@ OrientationPageBreakRule {
 
 ### Section 5.3 Dynamic Pagination Architecture
 
-#### 5.3.1 iOS/macOS - SwiftUI Implementation
-**Reactive Pagination**: Combine framework for attribute change detection
-**Layout Invalidation**: NSLayoutManager invalidation patterns
-**Performance**: Background queue processing with main thread UI updates
-**State Management**: @Published properties for pagination state and Pages[] structure
-**Animation**: Smooth transitions during layout recalculation
+#### 5.3.1 iOS/macOS - Swift 6 Pagination with Actor Isolation
+
+**Actor-Based Layout Engine:**
+- **PaginationActor**: Isolated actor managing all pagination calculations with sendable data structures
+- **MainActor Integration**: UI updates coordinated through MainActor with structured concurrency
+- **AsyncSequence Changes**: Layout attribute changes streamed through custom AsyncSequence for debouncing
+- **TaskGroup Processing**: Parallel pagination calculations using structured concurrency for performance
+- **Cancellation Support**: Proper task cancellation when layout parameters change during processing
+
+**Modern SwiftUI Integration:**
+- **@Observable Layout State**: New observation framework for pagination state with automatic UI updates
+- **Sendable Layout Models**: Thread-safe layout models that can be safely passed between actors
+- **Custom Layout Protocol**: iOS 16+ Layout conformance with actor-safe measurement and arrangement
+- **AsyncSequence UI Updates**: Real-time layout updates streamed to UI through AsyncSequence
+- **Structured View Updates**: Coordinated view updates using Swift 6's enhanced concurrency model
+
+**Enhanced Performance Architecture:**
+- **Background Pagination Actor**: Heavy calculations performed on background actor with sendable results
+- **Memory-Safe Caching**: Actor-isolated layout cache with automatic cleanup and thread safety
+- **Concurrent Measurement**: Parallel measurement of musical elements using TaskGroup operations
+- **Optimized State Changes**: Minimal state updates through Swift 6's enhanced observation system
+- **Resource Management**: Automatic memory management with improved ARC and actor isolation
+
+**Thread-Safe Layout Coordination:**
+- **Sendable Configuration**: All layout configuration objects conform to Sendable for safe actor usage
+- **Actor-Isolated Repositories**: Layout preference storage through actor-isolated repository pattern
+- **Cross-Actor Communication**: Safe data passing between pagination actor and UI layer
+- **Deadlock Prevention**: Swift 6's actor system eliminates potential deadlocks in layout calculations
+- **Atomic Updates**: Layout changes applied atomically to prevent intermediate invalid states
+
+**Advanced Animation Coordination:**
+- **MainActor Animations**: All animation triggers coordinated through MainActor for UI thread safety
+- **Async Animation Completion**: Animation completion handled through async/await patterns
+- **Concurrent Preparation**: Animation preparation work performed concurrently while maintaining UI responsiveness
+- **State Synchronization**: Layout state and animation state kept synchronized through actor isolation
+- **Smooth Transitions**: Enhanced transition smoothness through Swift 6's improved concurrency performance
+
+**CloudKit Integration with Actors:**
+- **CloudKit Actor**: Dedicated actor for cloud synchronization with sendable data models
+- **Conflict Resolution**: Thread-safe conflict resolution through structured concurrency
+- **Offline State Management**: Actor-isolated offline state with automatic synchronization
+- **Cross-Device Coordination**: Sendable pagination preferences synchronized across devices
+- **Background Sync**: CloudKit operations performed on background actors with UI updates on MainActor
 
 #### 5.3.2 Android - Compose Implementation  
 **State Observation**: StateFlow monitoring of layout-affecting properties
@@ -638,23 +719,59 @@ OrientationPageBreakRule {
 
 ### 6.1 Platform-Specific Audio Engines
 
-#### 6.1.1 Low-Latency Audio Requirements
-**iOS/macOS**: AVAudioEngine with exclusive audio session
-**Android**: Oboe library targeting AAudio for lowest latency
-**Windows**: WASAPI exclusive mode for professional audio
-**Linux**: ALSA direct access or PulseAudio with low-latency configuration
+#### 6.1.1 iOS/macOS - Professional Audio Architecture with Swift 6
 
-#### 6.1.2 Audio Features Implementation
-**Metronome Generation**: Sample-accurate timing with accent patterns
-**Recording Capability**: High-quality audio capture with real-time monitoring
-**Playback Engine**: Gapless playback with tempo adjustment
-**Audio Analysis**: Pitch detection and frequency analysis
+**AVAudioEngine with Actor Isolation:**
+- **AudioEngine Actor**: Dedicated actor for all audio processing with sendable audio data structures
+- **Hardware Sample Rate Matching**: Actor-isolated adaptation to device capabilities (44.1kHz, 48kHz, 96kHz)
+- **Buffer Management**: Thread-safe buffer operations with sendable PCM buffer wrappers
+- **Audio Unit Chain**: Actor-coordinated audio unit graph with structured concurrency for real-time processing
+- **Spatial Audio Integration**: AVAudioEnvironmentNode management through dedicated audio actor
+
+**Swift 6 Concurrency for Real-Time Audio:**
+- **MainActor UI Updates**: Audio state changes coordinated through MainActor for thread-safe UI updates
+- **Background Audio Processing**: Heavy audio analysis performed on background actors with sendable results
+- **AsyncSequence Audio Streams**: Real-time audio data streaming through custom AsyncSequence implementations
+- **TaskGroup Analysis**: Parallel audio analysis using structured concurrency for pitch detection and waveform processing
+- **Cancellation Support**: Proper task cancellation for audio operations when user interrupts or changes settings
+
+**Thread-Safe Audio State Management:**
+- **@Observable Audio Models**: Audio state management using Swift 6's observation framework for automatic UI updates
+- **Sendable Audio Configuration**: All audio settings and state objects conform to Sendable for safe actor usage
+- **Actor-Isolated Session Management**: AVAudioSession management through dedicated actor with proper lifecycle handling
+- **Cross-Actor Audio Communication**: Safe audio data passing between processing actors and UI layer
+- **Memory-Safe Audio Buffers**: Enhanced memory management for audio buffers with automatic cleanup
+
+**Enhanced Audio Analysis:**
+- **Concurrent FFT Processing**: Parallel frequency analysis using TaskGroup operations with vDSP and Accelerate framework
+- **Actor-Isolated ML Models**: Core ML audio models managed through dedicated actors for thread safety
+- **Real-Time Visualization**: Metal-rendered audio visualization with data safely passed from audio actors to MainActor
+- **Background Analysis Continuation**: Continued audio processing during device lock using structured concurrency
+- **Performance Monitoring**: Built-in performance monitoring with Swift 6's enhanced debugging capabilities
+
+#### 6.1.2 Android Audio Implementation
+**Oboe Integration**: AAudio backend for minimal latency on supported devices
+**Coroutine-Based Processing**: Kotlin coroutines for audio analysis and processing
+**StateFlow Audio State**: Audio state management through reactive streams
+**Background Processing**: Audio operations on background dispatchers with UI updates on Main
+
+#### 6.1.3 Windows Audio Implementation
+**WASAPI Integration**: Windows Audio Session API for professional audio
+**Task-Based Processing**: .NET Task and async/await for audio operations
+**Observable Audio State**: Audio state management through observable properties
+**Thread Coordination**: Proper thread coordination between audio and UI threads
+
+#### 6.1.4 Linux Audio Implementation
+**ALSA/PulseAudio**: Direct audio system integration for low latency
+**Thread Management**: Platform-specific threading for audio processing
+**Signal-Slot Communication**: Qt signals for audio state communication
+**Background Processing**: Dedicated audio processing threads
 **Format Support**: Platform-optimized codecs (AAC, OGG, FLAC)
 
 ### 6.2 Audio Processing Features
 
 #### 6.2.1 Metronome System
-**Timing Accuracy**: Sub-millisecond precision using audio callbacks
+**Timing Accuracy**: Sample-accurate timing using audio callbacks
 **Time Signature Support**: Complex meters with accent patterns
 **Sound Customization**: Different tones for downbeats and subdivisions
 **Visual Synchronization**: UI updates synchronized with audio beats
@@ -724,17 +841,41 @@ OrientationPageBreakRule {
 
 ### 7.1 SMuFL Implementation Strategy
 
-#### 7.1.1 Font Integration Approach
-**Font Embedding**: Bravura font bundled with application
-**Platform Registration**: Proper font registration on each platform
-**Fallback Fonts**: Petaluma or other SMuFL fonts as alternatives
-**Custom Glyphs**: Platform-specific rendering for complex ornaments
+#### 7.1.1 iOS/macOS - Advanced Typography with Swift 6 Integration
 
-#### 7.1.2 Symbol Rendering Standards
-**Unicode Compliance**: Full SMuFL specification adherence
-**Scaling System**: Proportional scaling based on staff size
-**Anti-aliasing**: Smooth rendering at all display densities
-**Color Support**: Configurable symbol colors for different elements
+**Actor-Safe Typography System:**
+- **Typography Actor**: Dedicated actor for font loading and glyph calculations with sendable font descriptors
+- **Thread-Safe Font Management**: CTFont integration with actor isolation for safe concurrent font operations
+- **Sendable Glyph Models**: Font metrics and glyph bounds wrapped in sendable structures for cross-actor usage
+- **Concurrent Font Loading**: Parallel font variant loading using TaskGroup operations
+- **Memory-Safe Font Caching**: Actor-isolated font cache with automatic cleanup and thread safety
+
+**Enhanced Text Kit 2 Integration:**
+- **MainActor Text Layout**: All text layout operations coordinated through MainActor for UI thread safety
+- **Background Measurement**: Heavy typography calculations performed on background actors with sendable results
+- **AsyncSequence Typography Updates**: Dynamic font changes streamed through custom AsyncSequence
+- **Structured Text Processing**: Text processing operations using structured concurrency for better performance
+- **Safe Baseline Calculations**: Thread-safe musical baseline alignment with actor-isolated font metrics
+
+**Metal-Accelerated Rendering with Concurrency:**
+- **Rendering Actor**: GPU-accelerated glyph rendering managed through dedicated actor
+- **Concurrent Shader Compilation**: Parallel shader compilation using TaskGroup for complex musical symbols
+- **Thread-Safe Texture Management**: Actor-isolated texture cache with sendable texture descriptors
+- **Background Glyph Generation**: Symbol texture generation performed concurrently with UI updates on MainActor
+- **Memory-Safe GPU Resources**: Enhanced GPU memory management with Swift 6's improved resource handling
+
+**SwiftUI Text Integration with @Observable:**
+- **@Observable Text Models**: Typography state management using Swift 6's observation framework
+- **Sendable Text Attributes**: All text styling and positioning data conform to Sendable for safe actor usage
+- **Actor-Coordinated Text Selection**: Thread-safe text selection handling with proper MainActor coordination
+- **Concurrent Pasteboard Operations**: Background pasteboard processing with UI updates on MainActor
+- **Dynamic Type with Actors**: Accessibility-compliant symbol scaling with actor-isolated calculations
+
+#### 7.1.2 Cross-Platform SMuFL Standards
+**Unicode Compliance**: Full SMuFL specification adherence across all platforms
+**Scaling System**: Proportional scaling based on staff size with platform optimization
+**Anti-aliasing**: Smooth rendering at all display densities using platform-specific techniques
+**Color Support**: Configurable symbol colors with platform-appropriate color management
 
 ### 7.2 Pipe Band Notation Specifics
 
@@ -817,7 +958,7 @@ OrientationPageBreakRule {
 ### 10.1 Comprehensive Testing Approach
 
 #### 10.1.1 Unit Testing (Platform-Specific)
-**iOS/macOS**: XCTest framework with Quick/Nimble for BDD
+**iOS/macOS**: XCTest framework with Swift 6 concurrency testing and actor isolation verification
 **Android**: JUnit 5 with MockK for Kotlin-specific testing
 **Windows**: xUnit with Moq for .NET testing
 **Linux**: Google Test (C++) or built-in Rust testing
@@ -913,11 +1054,11 @@ OrientationPageBreakRule {
 ### 12.1 Platform-Specific Targets
 
 #### 12.1.1 System Requirements
-**iOS**: iOS 15.0+, iPhone 12+ recommended, 1GB free storage
-**macOS**: macOS 12.0+, M1 or Intel Core i5+, 1GB free storage
-**Android**: API 26+, 4GB RAM, 1GB free storage
-**Windows**: Windows 10 1809+, 4GB RAM, 1GB free storage
-**Linux**: Modern distribution, 4GB RAM, 1GB free storage
+**iOS**: iOS 17.0+, iPhone 13+ recommended, 2GB free storage, A14 Bionic or newer
+**macOS**: macOS 14.0+, M1 or Intel Core i7+, 2GB free storage, 8GB RAM recommended
+**Android**: API 28+, 6GB RAM, 2GB free storage, ARMv8-A or x86_64 architecture
+**Windows**: Windows 11 22H2+, 8GB RAM, 2GB free storage, modern CPU with hardware acceleration
+**Linux**: Modern distribution with Wayland/X11, 8GB RAM, 2GB free storage, OpenGL 3.3+ support
 
 #### 12.1.2 Performance Benchmarks
 **Audio Latency**: Platform-optimized for minimum achievable latency
@@ -944,10 +1085,10 @@ OrientationPageBreakRule {
 ### 13.1 Development Methodology
 
 #### 13.1.1 Platform-Native Development
-**Team Structure**: Specialized teams for each platform
-**Shared Domain Logic**: Common business rules across platforms
-**Code Reviews**: Cross-platform consistency validation
-**Integration Points**: Regular synchronization of domain changes
+**Team Structure**: Specialized teams for each platform with shared architecture coordination
+**Shared Domain Logic**: Common business rules implemented consistently across platforms
+**Code Reviews**: Cross-platform consistency validation with architectural compliance checks
+**Integration Points**: Regular synchronization of domain changes with specification updates
 
 #### 13.1.2 Quality Assurance
 **Continuous Integration**: Automated builds and testing for all platforms
@@ -958,28 +1099,58 @@ OrientationPageBreakRule {
 ### 13.2 Release Strategy
 
 #### 13.2.1 Phased Rollout
-**Phase 1**: Core functionality with basic score editing
-**Phase 2**: Advanced notation features and cloud synchronization
-**Phase 3**: Audio features and advanced collaboration
-**Phase 4**: Community features and marketplace integration
+**Phase 1**: Core functionality with basic score editing and SMuFL rendering
+**Phase 2**: Advanced notation features with cloud synchronization and collaboration
+**Phase 3**: Audio features with recording, metronome, and analysis capabilities
+**Phase 4**: Community features with sharing, marketplace, and social integration
 
 #### 13.2.2 Platform Distribution
-**iOS**: App Store with TestFlight beta distribution
-**macOS**: Mac App Store and direct distribution
-**Android**: Google Play Store with Play Console beta
-**Windows**: Microsoft Store and direct installer
-**Linux**: Package managers and AppImage distribution
+**iOS**: App Store with TestFlight beta distribution and enterprise deployment options
+**macOS**: Mac App Store and direct distribution with notarization and Gatekeeper compliance
+**Android**: Google Play Store with Play Console beta and alternative store support
+**Windows**: Microsoft Store and direct installer with code signing and SmartScreen compatibility
+**Linux**: Package managers (APT, RPM, AUR) and universal formats (AppImage, Flatpak, Snap)
 
 ### 13.3 Repository Architecture
 
-#### 13.3.1 Platform-Specific Repository Structure
+#### 13.3.1 iOS/macOS Repository Architecture with Swift 6
 
-**Apple Ecosystem Repository (iOS/macOS)**
-- Single Xcode workspace containing both iOS and macOS targets
-- Shared Swift codebase with platform-specific UI implementations
-- Common domain logic and data layer across both Apple platforms
-- Platform-specific presentation layers using SwiftUI/UIKit patterns
-- Unified Core Data model with platform-appropriate optimizations
+**Modern Swift Package Architecture:**
+- **Swift 6 Workspace Structure**: Single workspace with iOS app target, macOS app target, and Swift 6 package targets
+- **Sendable Domain Models**: All shared domain logic implemented with Sendable conformance for thread safety
+- **Actor-Isolated Repositories**: Repository implementations using actor isolation for safe concurrent data access
+- **Structured Concurrency Integration**: All async operations using Swift 6's structured concurrency patterns
+- **Platform-Optimized Targets**: Separate app targets with Swift 6 concurrency optimizations for each platform
+
+**Enhanced Clean Architecture:**
+- **Domain Package**: Pure Swift 6 package with sendable entities, actor-based use cases, and protocol repositories
+- **Data Package**: Actor-isolated Core Data operations with sendable model transformations and CloudKit integration
+- **Presentation iOS**: SwiftUI with @Observable ViewModels and MainActor coordination for iOS-specific features
+- **Presentation macOS**: SwiftUI/AppKit integration with actor-safe state management and macOS-specific UI patterns
+- **Audio Package**: Actor-isolated AVAudioEngine operations with sendable audio data models and cross-platform optimization
+
+**Swift 6 Dependency Management:**
+- **Package.swift with Swift 6**: Updated package manifests targeting Swift 6 language mode
+- **Sendable Dependencies**: All package dependencies verified for Sendable conformance and actor safety
+- **Concurrency-Safe APIs**: Internal package APIs designed with Swift 6 concurrency in mind
+- **Testing with Actors**: Comprehensive test suites using Swift 6's testing improvements and actor isolation
+- **CI/CD Swift 6**: Build pipelines configured for Swift 6 compilation and concurrency checking
+
+**Thread-Safe Code Sharing:**
+- **100% Sendable Shared**: Business logic, domain entities, and use cases with complete Sendable conformance
+- **Actor-Isolated Shared**: Audio processing, Core Data operations, and cloud sync with proper actor boundaries
+- **Platform-Adapted**: Navigation and layout patterns adapted for each platform's concurrency requirements
+- **Platform-Specific**: UI conventions and platform APIs with MainActor coordination where appropriate
+- **Concurrency Testing**: Shared business logic tested for thread safety with Swift 6's enhanced testing tools
+
+**Development Workflow with Swift 6:**
+- **Strict Concurrency Mode**: All targets compiled with complete concurrency checking enabled
+- **Actor Isolation Reviews**: Code review process includes verification of proper actor isolation
+- **Performance Profiling**: Swift 6-optimized performance testing using latest Instruments capabilities
+- **Migration Strategy**: Incremental adoption of Swift 6 features with proper deprecation handling
+- **Cross-Platform Consistency**: Identical concurrency patterns across iOS and macOS implementations
+
+#### 13.3.2 Other Platform Repositories
 
 **Android Repository**
 - Standalone Android Studio project with Kotlin implementation
@@ -1016,30 +1187,32 @@ This approach maximizes platform-native optimization while maintaining consisten
 ### 14.1 Advanced Features Roadmap
 
 #### 14.1.1 Phase 2 Enhancements
-**Real-time Collaboration**: Multiple users editing simultaneously
-**Advanced Audio Analysis**: Pitch correction and timing feedback
-**AI Practice Assistant**: Intelligent practice recommendations
-**Video Integration**: Record practice sessions with synchronized score
+**Real-time Collaboration**: Multiple users editing simultaneously with operational transformation and conflict resolution
+**Advanced Audio Analysis**: Pitch correction, timing feedback, and performance evaluation with machine learning
+**AI Practice Assistant**: Intelligent practice recommendations based on performance analysis and learning patterns
+**Video Integration**: Record practice sessions with synchronized score display and multi-angle recording
 
 #### 14.1.2 Phase 3 Enhancements
-**Hardware Integration**: MIDI controller and electronic instrument support
-**AR/VR Support**: Augmented reality music stand and immersive practice
-**Community Features**: Score sharing marketplace and social features
-**Competition Integration**: Direct integration with pipe band competition systems
+**Hardware Integration**: MIDI controller support and electronic instrument connectivity
+**AR/VR Support**: Augmented reality music stand with spatial audio and immersive practice environments
+**Community Features**: Score sharing marketplace with rating system and collaborative editing
+**Competition Integration**: Direct integration with pipe band competition systems and adjudication tools
+
 
 ### 14.2 Platform Evolution
 
 #### 14.2.1 Emerging Platforms
-**Web Platform**: Progressive Web App for cross-platform accessibility
-**Smart TV**: Large screen display for band practice sessions
-**Wearable Devices**: Practice tracking and metronome on smartwatches
-**IoT Integration**: Wireless metronome synchronization across band
+**Web Platform**: Progressive Web App for cross-platform accessibility with WebAssembly audio processing
+**Smart TV**: Large screen display for band practice sessions with wireless device connectivity
+**Wearable Devices**: Practice tracking and metronome on smartwatches with haptic feedback
+**IoT Integration**: Wireless metronome synchronization across band with mesh networking
 
 #### 14.2.2 Technology Evolution
-**Machine Learning**: Advanced audio analysis and practice feedback
-**Cloud Computing**: Server-side audio processing and analysis
-**Blockchain**: Decentralized score sharing and copyright protection
-**5G Integration**: Real-time collaboration over high-speed mobile networks
+**Machine Learning**: Advanced audio analysis and practice feedback with on-device processing
+**Cloud Computing**: Server-side audio processing and analysis with edge computing integration
+**Blockchain**: Decentralized score sharing and copyright protection with smart contracts
+**5G Integration**: Real-time collaboration over high-speed mobile networks with ultra-low latency
+
 
 ## 15. Conclusion
 
@@ -1054,12 +1227,14 @@ This Clean Architecture specification provides a comprehensive foundation for de
 
 **Key Architectural Benefits:**
 
-**Platform-Native Excellence**: Each platform uses its optimal technologies and patterns for best performance and user experience
-**Universal Domain Logic**: Business rules implemented consistently across all platforms while leveraging platform-specific optimizations
-**Offline-First Design**: Complete functionality without network dependency, ensuring reliability in any location
-**Professional Music Notation**: SMuFL-compliant rendering delivering publication-quality scores
-**Flexible Cloud Integration**: Support for any cloud provider through platform-native file system integration
-**Cultural Sensitivity**: Thoughtful internationalization respecting global pipe band traditions
+**Platform-Native Excellence**: Each platform uses its optimal technologies and patterns for best performance and user experience while maintaining architectural consistency
+**Universal Domain Logic**: Business rules implemented consistently across all platforms while leveraging platform-specific optimizations and concurrency models
+**Offline-First Design**: Complete functionality without network dependency, ensuring reliability in any location or connectivity situation
+**Professional Music Notation**: SMuFL-compliant rendering delivering publication-quality scores with proper typography and musical intelligence
+**Flexible Cloud Integration**: Support for any cloud provider through platform-native file system integration without vendor lock-in
+**Cultural Sensitivity**: Thoughtful internationalization respecting global pipe band traditions and regional preferences
+
+**Swift 6 Integration**: The iOS/macOS implementation leverages Swift 6's complete concurrency model for thread-safe audio processing, layout calculations, and real-time collaboration features, providing industry-leading performance and reliability.
 
 The specification addresses real-world needs of the international pipe band community, from Highland Games to European competitions, ensuring musicians can practice, collaborate, and perform at the highest level regardless of their location or preferred platform. The offline-first approach combined with professional notation rendering ensures reliability and quality that meets the demanding standards of competitive pipe band music.
 
