@@ -340,40 +340,360 @@ Barline
 - Heavy (U+E034)
 - Dotted (U+E037)
 
-### 3.1.6 Ornament System Architecture
+## 3.1.6 Embellishment System Architecture
 
-**OrnamentDefinition Entity:**
+### Embellishment as Note Property
+
+Embellishments are decorative musical elements that belong to individual notes rather than spanning between notes. They are implemented as properties of notes with sophisticated layout intelligence.
+
 ```
-OrnamentDefinition
+Embellishment (Abstract Base Class)
 ├── Musical Properties
-│   ├── type: OrnamentType
-│   ├── graceNotePattern: [GraceNote]
-│   ├── contextRules: [ContextRule]
-│   ├── difficultyLevel: SkillLevel
-│   └── regionalVariations: [RegionalStyle: OrnamentVariation]
+│   ├── embellishmentType: EmbellishmentType
+│   ├── graceNotes: [GraceNote]
+│   ├── traditionalName: String?
+│   └── executionStyle: ExecutionStyle
 ├── Layout Properties
-│   ├── symbolSequence: [SMuFLCodepoint]
-│   ├── defaultSpacing: SpacingTemplate
-│   ├── positioningRules: PositioningRules
-│   └── collisionAvoidance: CollisionRules
-└── Domain Methods
-    ├── getPatternFor(targetNote: Note, style: RegionalStyle) -> [GraceNote]
-    ├── getSymbolSequenceFor(context: MusicalContext) -> [SMuFLCodepoint]
-    ├── calculatePositions(targetNote: Note, staffContext: StaffContext) -> [CGPoint]
-    └── validatePlacement(context: MusicalContext) -> [ValidationError]
+│   ├── graceNotePitchLayout: PitchLayoutStrategy
+│   ├── handAssignment: HandAssignment?           // For drums
+│   ├── distanceFromPrincipal: CGFloat
+│   ├── interGraceSpacing: GraceSpacingStrategy
+│   ├── verticalPlacement: VerticalPlacement
+│   └── collisionAvoidance: EmbellishmentCollisionStrategy
+└── Layout Methods
+    ├── calculateGraceNotePositions(principalNotePosition: CGPoint) -> [CGPoint]
+    ├── determineOptimalSpacing(staffContext: StaffContext) -> SpacingResult
+    ├── resolveCollisions(nearbyEmbellishments: [Embellishment]) -> CollisionResolution
+    └── validateLayoutFeasibility(layoutContext: LayoutContext) -> [ValidationError]
 ```
 
-**Ornament Types (Bagpipes):**
-- Basic: Cut, Strike, Grip
-- Complex: Doubling, Half Doubling, Throw
-- Advanced: Taorluath, Crunluath, Birl
-- Movement: Leumluath, Cadences
+### Pipe Band Embellishments
 
-**Ornament Types (Drums):**
-- Snare: Rolls, Flams, Drags, Roughs (Traditional, Swiss), Open Drags
-- Bass/Tenor: Flams, Accents, Rim Shots
+```
+PipeBandEmbellishment : Embellishment
+├── Musical Properties
+│   ├── regionalStyle: PipeBandStyle     // Highland, Border, etc.
+│   ├── fingeringSequence: FingeringPattern
+│   └── traditionalNotation: Bool
+├── Layout Properties
+│   ├── gracePitchStrategy: GracePitchStrategy
+│   ├── fingeringOptimization: FingeringOptimization
+│   ├── staffPositionOverride: [StaffPosition]?
+│   └── beamingStrategy: GraceBeamingStrategy
+└── Layout Methods
+    ├── calculateGracePitches(principalPitch: Pitch) -> [Pitch]
+    ├── optimizeForFingeringFlow() -> FingeringOptimization
+    └── determineStaffPositions() -> [StaffPosition]
+```
 
-### 3.1.7 Layout Value Objects
+**Specific Pipe Band Embellishment Types:**
+
+```
+CutEmbellishment : PipeBandEmbellishment
+├── cutType: CutType                    // High G cut, A cut, etc.
+└── Layout Calculation Logic:
+    ├── Grace pitch: Determined by cut type and principal note
+    ├── Distance: Standard grace note spacing rules
+    ├── Vertical position: Above staff, specific clearance
+    └── Collision handling: Adjust spacing if other embellishments nearby
+
+StrikeEmbellishment : PipeBandEmbellishment  
+├── strikeNote: Pitch                   // Which note creates the strike
+└── strikeStyle: StrikeStyle
+
+DoublingEmbellishment : PipeBandEmbellishment
+├── doublingType: DoublingType          // Full, half, thumb
+├── graceSequence: [GraceNote]          // Low G, D, Low G pattern
+└── beamingStyle: GraceBeamStyle
+
+ThrowEmbellishment : PipeBandEmbellishment
+├── throwType: ThrowType                // D throw, high G throw
+└── fingerPattern: ThrowFingering
+```
+
+### Drum Embellishments
+
+```
+DrumEmbellishment : Embellishment
+├── Musical Properties
+│   ├── rudimentName: String
+│   ├── stickingPattern: StickingSequence
+│   └── accentPattern: AccentPattern
+├── Layout Properties
+│   ├── handAssignment: HandAssignment
+│   ├── stickHeightVariation: StickHeightPattern
+│   ├── accentVisualization: AccentVisualization
+│   └── rudimentSpacing: RudimentSpacingStrategy
+└── Layout Methods
+    ├── assignOptimalHands(context: DrumContext) -> HandAssignment
+    ├── calculateStickHeights() -> [StickHeight]
+    └── optimizeForRudimentFlow() -> RudimentOptimization
+```
+
+**Specific Drum Embellishment Types:**
+
+```
+FlamEmbellishment : DrumEmbellishment
+├── flamTiming: FlamTiming              // How tight/open
+└── Layout Calculation Logic:
+    ├── Hand assignment: Opposite hand from principal note
+    ├── Grace note height: Lower than principal stroke
+    ├── Horizontal offset: Precise positioning for flam appearance
+    └── Spacing: Tight spacing that shows the flam relationship
+
+DragEmbellishment : DrumEmbellishment  
+├── dragType: DragType                  // Single, double, etc.
+├── bounceCount: Int
+└── releaseStyle: DragRelease
+```
+
+### Note Integration with Embellishments
+
+```
+Note (Updated with Embellishment)
+├── Musical Properties (Domain Core)
+│   ├── pitch: Pitch
+│   ├── duration: Duration
+│   ├── embellishment: Embellishment?    // Embellishment property
+│   ├── accidental: Accidental?
+│   ├── articulation: [Articulation]
+│   └── noteGroups: [NoteGroupID]
+├── Layout Properties (Domain Embedded)
+│   ├── [existing layout properties...]
+└── Domain Methods
+    ├── [existing methods...]
+    ├── calculateTotalWidth(layoutContext: LayoutContext) -> CGFloat
+    ├── calculateEmbellishmentLayout() -> EmbellishmentLayoutResult
+    └── getTotalLayoutBounds() -> CGRect
+```
+
+### Layout Integration
+
+Embellishment layout integrates seamlessly with note layout calculations:
+
+```
+Note Layout Integration
+├── calculateTotalWidth() includes embellishment space requirements
+├── calculateEmbellishmentLayout() handles grace note positioning
+├── getTotalLayoutBounds() encompasses embellishment bounds
+└── Collision detection considers embellishment spatial requirements
+```
+
+### Validation Integration
+
+```
+EmbellishmentValidationRules
+├── graceNoteCompatibility: CompatibilityRule
+├── fingeringPossibility: FingeringRule      // For pipe band embellishments
+├── traditionalOrnamentation: TraditionRule   // Cultural accuracy
+├── layoutFeasibility: LayoutRule            // Spatial constraints
+└── performancePracticality: PracticalityRule // Playability assessment
+```
+
+This embellishment architecture treats decorative elements as integral properties of their principal notes while providing sophisticated layout intelligence for complex grace note patterns, hand assignments, and collision resolution.
+
+## 3.1.7 Note Group System Architecture
+
+### Note Group Base Entity
+
+Note groups represent musical relationships that span between two notes, such as slurs, ties, tuplets, and dynamic markings. They provide a unified system for managing connections between notes while maintaining referential integrity.
+
+```
+NoteGroup (Abstract Base Class)
+├── Musical Properties (Domain Core)
+│   ├── id: UUID
+│   ├── headNote: NoteID
+│   ├── tailNote: NoteID
+│   ├── groupType: NoteGroupType
+│   └── musicalFunction: MusicalFunction
+├── Layout Properties (Domain Embedded)
+│   ├── spanningLine: SpanningLineStyle?
+│   ├── groupSymbol: SMuFLCodepoint?
+│   ├── verticalPosition: VerticalPlacement
+│   └── horizontalAlignment: HorizontalAlignment
+└── Domain Methods
+    ├── isHeadNote(NoteID) -> Bool
+    ├── isTailNote(NoteID) -> Bool
+    └── validateNoteSequence(context: MusicalContext) -> [ValidationError]
+```
+
+### Concrete Note Group Implementations
+
+**Tuplet Group** (Essential for pipe band music with frequent triplets and duplets):
+```
+TupletGroup : NoteGroup
+├── Musical Properties
+│   ├── tupletRatio: TupletRatio (3:2, 2:3, etc.)
+│   ├── bracketStyle: TupletBracketStyle
+│   ├── numberDisplay: TupletNumberDisplay
+│   └── rhythmicGrouping: RhythmicPattern
+├── Layout Properties
+│   ├── bracketClearance: CGFloat
+│   ├── numberPosition: NumberPosition
+│   └── spanningBracket: BracketStyle
+└── Domain Methods
+    ├── applyTupletRatio(Duration) -> Duration
+    ├── calculateBracketBounds([NotePosition]) -> CGRect
+    └── validateTupletSequence([Note]) -> [ValidationError]
+```
+
+**Slur Group** (For musical phrasing and legato connections):
+```
+SlurGroup : NoteGroup
+├── Musical Properties
+│   ├── slurType: SlurType (slur, phrase)
+│   ├── curvatureDirection: CurvatureDirection
+│   ├── phraseBoundary: Bool
+│   └── musicalIntention: PhrasalFunction
+├── Layout Properties
+│   ├── curvatureHeight: CGFloat
+│   ├── endpointAdjustment: EndpointAdjustment
+│   └── collisionAvoidance: CollisionStrategy
+└── Domain Methods
+    ├── calculateSlurCurve([NotePosition]) -> BezierPath
+    ├── determineOptimalCurvature([Note]) -> CurvatureParameters
+    └── validateSlurPlacement([Note]) -> [ValidationError]
+```
+
+**Tie Group** (Replacing the previous tie property on notes):
+```
+TieGroup : NoteGroup
+├── Musical Properties
+│   ├── tieType: TieType (start, continue, end)
+│   ├── tieDirection: TieDirection
+│   └── crossSystemTie: Bool
+├── Layout Properties
+│   ├── tieThickness: CGFloat
+│   ├── tieHeight: CGFloat
+│   └── systemBreakHandling: SystemBreakStyle
+└── Domain Methods
+    ├── validatePitchConsistency([Note]) -> [ValidationError]
+    ├── calculateTieCurve(startPos: CGPoint, endPos: CGPoint) -> BezierPath
+    └── handleSystemBreak() -> SystemBreakTieResult
+```
+
+**Dynamic Group** (For crescendos, diminuendos, and other dynamic markings):
+```
+DynamicGroup : NoteGroup
+├── Musical Properties
+│   ├── dynamicType: DynamicType (cresc, dim, etc.)
+│   ├── startDynamic: DynamicLevel?
+│   ├── endDynamic: DynamicLevel?
+│   └── curvature: DynamicCurvature
+├── Layout Properties
+│   ├── hairpinThickness: CGFloat
+│   ├── textPosition: TextPosition
+│   └── verticalOffset: CGFloat
+└── Domain Methods
+    ├── calculateHairpinPath([NotePosition]) -> HairpinPath
+    ├── determineDynamicTextPlacement() -> TextPlacement
+    └── validateDynamicProgression([Note]) -> [ValidationError]
+```
+
+### Note Integration
+
+Notes maintain a simple list of note group references, eliminating redundant properties:
+
+```
+Note (Updated)
+├── Musical Properties (Domain Core)
+│   ├── pitch: Pitch
+│   ├── duration: Duration
+│   ├── embellishment: Embellishment?
+│   ├── accidental: Accidental?
+│   ├── articulation: [Articulation]
+│   └── noteGroups: [NoteGroupID]          // Single list of all note groups
+├── Layout Properties (Domain Embedded)
+│   ├── [existing layout properties...]
+└── Domain Methods
+    ├── [existing methods...]
+    ├── addToNoteGroup(NoteGroupID) -> Void
+    ├── removeFromNoteGroup(NoteGroupID) -> Void
+    ├── getNoteGroupsByType(NoteGroupType) -> [NoteGroupID]
+    ├── getTies() -> [TieGroup]             // Convenience method
+    ├── getSlurs() -> [SlurGroup]           // Convenience method
+    └── getDynamics() -> [DynamicGroup]     // Convenience method
+```
+
+**Eliminated Properties:**
+- ~~`tie: TieType?`~~ - Now represented as `TieGroup` in `noteGroups`
+
+### Document Storage
+
+Note groups are stored at the document level for efficient lookup while notes maintain direct references:
+
+```
+ScoreDocument (Updated)
+├── Metadata (title, composer, version, sync status, etc.)
+├── Pages[] (physical page layout assignments)
+├── DocumentLayoutSettings (global layout preferences)
+├── noteGroups: [UUID: NoteGroup]          // Note group registry
+├── Tunes[] (1 or more tunes)
+└── Domain Methods
+    ├── [existing methods...]
+    ├── addNoteGroup(NoteGroup) -> Void
+    ├── removeNoteGroup(UUID) -> Void
+    ├── getNoteGroup(UUID) -> NoteGroup?
+    └── validateNoteGroupIntegrity() -> [ValidationError]
+```
+
+### Processing Pattern
+
+Note groups are processed naturally during measure iteration without requiring separate spanned note collections:
+
+```
+// Layout processing pattern
+func layoutMeasure(measure: Measure) {
+    var activeTuplets: [TupletGroup] = []
+    var activeSlurs: [SlurGroup] = []
+    
+    for note in measure.notes {
+        // Start new groups
+        for groupID in note.noteGroups {
+            if let group = document.getNoteGroup(groupID) {
+                if group.isHeadNote(note.id) {
+                    // Begin processing this group
+                }
+            }
+        }
+        
+        // Apply effects from active groups
+        // Process note layout with group influence
+        
+        // End completed groups
+        activeTuplets.removeAll { $0.isTailNote(note.id) }
+        activeSlurs.removeAll { $0.isTailNote(note.id) }
+    }
+}
+```
+
+### Repository Integration
+
+```
+MusicalDocumentRepository (Updated)
+├── [existing methods...]
+├── saveNoteGroup(NoteGroup) -> SaveResult
+├── deleteNoteGroup(UUID) -> DeleteResult
+├── getNoteGroupsForNote(NoteID) -> [NoteGroup]
+├── validateNoteGroupIntegrity() -> [ValidationError]
+└── optimizeNoteGroupLayout() -> OptimizationResult
+```
+
+### Validation Rules
+
+```
+NoteGroupValidationRules
+├── headTailNoteExistence: ExistenceRule
+├── noteSequenceIntegrity: SequenceRule
+├── groupTypeConsistency: TypeConsistencyRule
+├── musicalLogicValidation: MusicalLogicRule
+└── layoutFeasibilityCheck: LayoutFeasibilityRule
+```
+
+This note group architecture provides a unified system for managing musical relationships while maintaining clean separation between connection types (note groups) and decorative elements (embellishments). The processing pattern naturally handles spanned notes through iteration without requiring redundant storage or complex query methods.
+
+
+### 3.1.8 Layout Value Objects
 
 #### SpacingHints Value Object
 ```
@@ -417,7 +737,7 @@ CollisionHints
 └── priority: CollisionPriority
 ```
 
-### 3.1.8 Layout Configuration Entities
+### 3.1.9 Layout Configuration Entities
 
 #### TuneLayoutPreference Entity
 ```
@@ -444,7 +764,7 @@ DocumentLayoutSettings
 └── accessibilityMode: Bool
 ```
 
-### 3.1.9 Musical Validation Rules
+### 3.1.10 Musical Validation Rules
 
 #### Layout Consistency Rules
 ```
@@ -468,7 +788,7 @@ MusicalValidationRules
 └── phraseBoundaryRespect: PhraseBoundaryRule
 ```
 
-### 3.1.10 Performance and Caching Entities
+### 3.1.11 Performance and Caching Entities
 
 #### LayoutCache Entity
 ```
