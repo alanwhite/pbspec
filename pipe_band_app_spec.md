@@ -340,7 +340,7 @@ Barline
 - Heavy (U+E034)
 - Dotted (U+E037)
 
-# Section 3.1.6 - Embellishment System Architecture (Updated)
+# Section 3.1.6 - Embellishment System Architecture
 
 ## Embellishment as Note Property
 
@@ -348,17 +348,14 @@ Embellishments are decorative musical elements that belong to individual notes r
 
 ### Base Embellishment Entity
 
-**Embellishment Component Architecture:**
+**Embellishment Abstract Base Class:**
 ```
 Embellishment (Abstract Base Class)
 ├── Musical Properties (Domain Core)
 │   ├── embellishmentType: Classification of embellishment variant
-│   ├── graceNotes: Collection of grace note patterns
 │   ├── traditionalName: Cultural terminology preservation
 │   └── executionStyle: Performance interpretation guidance
 ├── Layout Properties (Domain Embedded)
-│   ├── graceNotePitchLayout: Pitch positioning strategy
-│   ├── handAssignment: Drum-specific hand coordination data
 │   ├── distanceFromPrincipal: Spacing from main note
 │   ├── interGraceSpacing: Grace note internal spacing
 │   ├── verticalPlacement: Staff positioning requirements
@@ -372,73 +369,89 @@ Embellishment (Abstract Base Class)
     └── validateLayoutFeasibility: Constraint validation
 ```
 
-## Pipe Band Embellishments
+## Bagpipe Embellishments
 
-### PipeBandEmbellishment Entity
+### BagpipeEmbellishment Entity
 
-**Pipe Band Specific Architecture:**
+**Bagpipe Specific Architecture:**
 ```
-PipeBandEmbellishment : Embellishment
-├── Musical Properties (Cultural Context)
+BagpipeEmbellishment : Embellishment
+├── Musical Properties (Bagpipe Context)
 │   ├── regionalStyle: Geographic and cultural tradition identifier
 │   ├── fingeringSequence: Technical execution pattern
 │   └── traditionalNotation: Historical accuracy preference
-├── Layout Properties (Pipe-Specific)
+├── Layout Properties (Bagpipe-Specific)
 │   ├── gracePitchStrategy: Pitch relationship calculation method
 │   ├── fingeringOptimization: Technical execution enhancement
 │   ├── staffPositionOverride: Manual positioning capability
 │   └── beamingStrategy: Grace note connection approach
-└── Layout Methods (Pipe-Specific Behavior)
+└── Layout Methods (Bagpipe-Specific Behavior)
     ├── calculateGracePitches: Determine pitch relationships
     ├── optimizeForFingeringFlow: Enhance technical execution
     └── determineStaffPositions: Calculate vertical placement
 ```
 
-### Specific Pipe Band Embellishment Types
+### Specific Bagpipe Embellishment Types
 
-#### CutEmbellishment
-**Cut Embellishment Specification:**
+#### DoublingEmbellishment
+**Double Strike Embellishment Specification:**
 ```
-CutEmbellishment : PipeBandEmbellishment
-├── cutType: Variant classification (High G cut, A cut, etc.)
+DoubleStrikeEmbellishment : BagpipeEmbellishment
+├── graceSequence: Calculated grace note pattern based on principal note pitch
+├── beamingStyle: Grace note connection approach
 └── Layout Calculation Requirements:
-    ├── Grace pitch: Determined by cut type and principal note relationship
-    ├── Distance: Standard grace note spacing rules application
-    ├── Vertical position: Above staff with specific clearance requirements
-    └── Collision handling: Spacing adjustment for nearby embellishments
+    ├── Dynamic grace note pattern calculation based on principal note pitch
+    ├── Proper beaming across 3-grace note sequences
+    ├── Spacing optimization for complex pattern variations
+    └── Collision avoidance with adjacent embellishments
 ```
 
-#### StrikeEmbellishment
-**Strike Embellishment Specification:**
+**Double Strike Pattern Logic:**
 ```
-StrikeEmbellishment : PipeBandEmbellishment  
-├── strikeNote: Pitch specification for strike execution
-├── strikeStyle: Style variant classification
-└── Layout Calculation Requirements:
-    ├── Grace note positioning: Placement before principal note
-    ├── Pitch relationships: Specific intervals for different strike types
-    ├── Beaming connections: Visual connection to principal note
-    └── Staff position optimization: Readability-focused placement
+DoubleStrike Grace Note Calculation:
+├── Grace 1: High G (always)
+├── Grace 2: Same pitch as principal note (always)
+├── Grace 3: Conditional based on principal note pitch:
+│   ├── If principal < D → Low G grace note
+│   ├── If principal == D → Low G grace note OR C grace note (user choice)
+│   └── If principal > D → (principal - 1 semitone) grace note
+└── Principal Note: Original note
 ```
 
 #### DoublingEmbellishment
 **Doubling Embellishment Specification:**
 ```
-DoublingEmbellishment : PipeBandEmbellishment
-├── doublingType: Variant classification (Full, half, thumb)
-├── graceSequence: Grace note pattern specification (Low G, D, Low G)
+DoublingEmbellishment : BagpipeEmbellishment
+├── doublingType: DoublingType (upToF, highG, highA)
+├── graceSequence: Calculated grace note pattern based on principal note and doubling type
 ├── beamingStyle: Grace note connection approach
 └── Layout Calculation Requirements:
-    ├── Complex grace note sequence: Multi-note positioning
-    ├── Proper beaming: Connection across multiple grace notes
-    ├── Spacing optimization: Readability-focused arrangement
-    └── Collision avoidance: Adjacent embellishment coordination
+    ├── Dynamic grace note pattern calculation based on principal note pitch
+    ├── Proper beaming across variable grace note sequences  
+    ├── Spacing optimization for different pattern lengths
+    └── Collision avoidance with adjacent embellishments
+```
+
+**DoublingType Logic:**
+```
+DoublingType:
+├── upToF: Doubling on notes up to and including F
+│   └── Pattern Logic:
+│       ├── Grace 1: High G (always)
+│       ├── Grace 2: Same pitch as main note (always)
+│       ├── Grace 3: If main note < D → D grace note
+│       │           If main note ≥ D → (main note + 1) grace note
+│       └── Main Note: Original note
+├── highG: Doubling specifically on high G
+│   └── Grace pattern: High G, F, then principal High G note
+├── highA: Doubling specifically on high A
+│   └── Grace pattern: High A, High G, then principal High A note
 ```
 
 #### ThrowEmbellishment
 **Throw Embellishment Specification:**
 ```
-ThrowEmbellishment : PipeBandEmbellishment
+ThrowEmbellishment : BagpipeEmbellishment
 ├── throwType: Variant classification (D throw, high G throw)
 ├── fingerPattern: Technical execution specification
 └── Layout Calculation Requirements:
@@ -448,32 +461,171 @@ ThrowEmbellishment : PipeBandEmbellishment
     └── Beaming style: Appropriate visual connections
 ```
 
+#### LightDThrowEmbellishment
+**Light D Throw Embellishment Specification:**
+```
+LightDThrowEmbellishment : BagpipeEmbellishment
+├── graceSequence: Fixed grace note pattern (Low G, D, C)
+├── beamingPattern: Grace note connection approach
+├── playingHints: Performance execution guidance
+└── Layout Calculation Requirements:
+    ├── Fixed 3-grace note positioning: Low G, D, C sequence
+    ├── Proper beaming: Grace note group connections
+    ├── Spacing optimization: Compact throw pattern accommodation
+    ├── Staff position management: Above staff placement
+    └── Visual notation consistency: Always display all grace notes
+```
+
+**Light D Throw Pattern Logic:**
+```
+Light D Throw Grace Note Pattern:
+├── Grace 1: Low G (always written, may be omitted in performance)
+├── Grace 2: D (always played)
+├── Grace 3: C (always played)
+├── Principal Note: D (specific to D principal)
+└── Performance Rule: If prior note == Low G, first grace note omitted in execution but still notated
+```
+
+#### HeavyDThrowEmbellishment
+**Heavy D Throw Embellishment Specification:**
+```
+HeavyDThrowEmbellishment : BagpipeEmbellishment
+├── graceSequence: Fixed grace note pattern (Low G, D, Low G, C)
+├── beamingPattern: Grace note connection approach
+├── playingHints: Performance execution guidance
+└── Layout Calculation Requirements:
+    ├── Fixed 4-grace note positioning: Low G, D, Low G, C sequence
+    ├── Proper beaming: Grace note group connections
+    ├── Spacing optimization: Extended throw pattern accommodation
+    ├── Staff position management: Above staff placement
+    └── Visual notation consistency: Always display all grace notes
+```
+
+**Heavy D Throw Pattern Logic:**
+```
+Heavy D Throw Grace Note Pattern:
+├── Grace 1: Low G (always written, may be omitted in performance)
+├── Grace 2: D (always played)
+├── Grace 3: Low G (always played)
+├── Grace 4: C (always played)
+├── Principal Note: D (specific to D principal)
+└── Performance Rule: If prior note == Low G, first grace note omitted in execution but still notated
+```
+
+#### LowABirlEmbellishment
+**Low A Birl Embellishment Specification:**
+```
+LowABirlEmbellishment : BagpipeEmbellishment
+├── graceSequence: Conditional grace note pattern based on prior note
+├── beamingPattern: Grace note connection approach
+├── playingHints: Performance execution guidance
+└── Layout Calculation Requirements:
+    ├── Conditional grace note positioning: 4 or 3 grace notes based on prior note
+    ├── Proper beaming: Grace note group connections
+    ├── Spacing optimization: Birl pattern accommodation
+    ├── Staff position management: Above staff placement
+    └── Dynamic notation: Grace note display varies by prior note
+```
+
+**Low A Birl Pattern Logic:**
+```
+Low A Birl Grace Note Pattern:
+├── If prior note != Low A:
+│   ├── Grace 1: Low A (written and played)
+│   ├── Grace 2: Low G (always played)
+│   ├── Grace 3: Low A (always played)
+│   ├── Grace 4: Low G (always played)
+│   └── Principal Note: Low A (specific to Low A principal)
+├── If prior note == Low A:
+│   ├── Grace 1: (omitted from notation and performance)
+│   ├── Grace 2: Low G (always played)
+│   ├── Grace 3: Low A (always played)
+│   ├── Grace 4: Low G (always played)
+│   └── Principal Note: Low A (specific to Low A principal)
+└── Notation Rule: First grace note completely omitted when prior note is Low A
+```
+
+#### GGracenoteBirlEmbellishment
+**G Gracenote Birl Embellishment Specification:**
+```
+GGracenoteBirlEmbellishment : BagpipeEmbellishment
+├── graceSequence: Fixed grace note pattern (High G, Low A, Low G, Low A, Low G)
+├── beamingPattern: Grace note connection approach
+├── playingHints: Performance execution guidance
+└── Layout Calculation Requirements:
+    ├── Fixed 5-grace note positioning: High G, Low A, Low G, Low A, Low G sequence
+    ├── Proper beaming: Grace note group connections
+    ├── Spacing optimization: Extended birl pattern accommodation
+    ├── Staff position management: Above staff placement
+    └── Visual notation consistency: Always display all grace notes
+```
+
+**G Gracenote Birl Pattern Logic:**
+```
+G Gracenote Birl Grace Note Pattern:
+├── Grace 1: High G (always written and played)
+├── Grace 2: Low A (always written and played)
+├── Grace 3: Low G (always written and played)
+├── Grace 4: Low A (always written and played)
+├── Grace 5: Low G (always written and played)
+├── Principal Note: Low A (specific to Low A principal)
+└── No Exceptions: All grace notes always written and played regardless of prior note
+```
+
+#### GripEmbellishment
+**Grip Embellishment Specification (also known as Leamluath):**
+```
+GripEmbellishment : BagpipeEmbellishment
+├── gripType: Variant classification (Regular, breabach)
+├── traditionalName: "Leamluath" (Gaelic term preservation)
+├── graceSequence: Fixed grace note pattern (Low G, D, Low G)
+├── beamingPattern: Complex beaming style requirements
+├── playingHints: Performance execution guidance
+└── Layout Calculation Requirements:
+    ├── Fixed 3-grace note positioning: Low G, D, Low G sequence
+    ├── Sophisticated beaming: Grace note group connections
+    ├── Spacing optimization: Complex pattern accommodation
+    ├── Staff position management: Readability preservation
+    └── Visual notation consistency: Always display all grace notes
+```
+
+**Grip Pattern Logic:**
+```
+Grip Grace Note Pattern:
+├── Grace 1: Low G (always written, may be omitted in performance)
+├── Grace 2: D (always played)
+├── Grace 3: Low G (always played)
+├── Principal Note: Original note (any pitch)
+└── Performance Rule: If prior note == Low G, first grace note omitted in execution but still notated
+```
+
 #### TaorluathEmbellishment
 **Taorluath Embellishment Specification:**
 ```
-TaorluathEmbellishment : PipeBandEmbellishment
+TaorluathEmbellishment : BagpipeEmbellishment
 ├── taorluathType: Variant classification (Regular, breabach)
-├── complexPattern: Multi-grace note sequence specification
+├── graceSequence: Fixed grace note pattern (Low G, D, Low G, E)
 ├── beamingPattern: Complex beaming style requirements
+├── playingHints: Performance execution guidance
 └── Layout Calculation Requirements:
-    ├── Complex multi-grace positioning: Advanced spatial arrangement
+    ├── Fixed 4-grace note positioning: Low G, D, Low G, E sequence
     ├── Sophisticated beaming: Grace note group connections
     ├── Spacing optimization: Complex pattern accommodation
-    └── Staff position management: Readability preservation
+    ├── Staff position management: Readability preservation
+    └── Visual notation consistency: Always display all grace notes
 ```
 
-#### CrunluathEmbellishment
-**Crunluath Embellishment Specification:**
+**Taorluath Pattern Logic:**
 ```
-CrunluathEmbellishment : PipeBandEmbellishment
-├── crunluathType: Variant classification (Regular, a mach, breabach)
-├── extendedPattern: Extended grace note sequence specification
-├── traditionalSpelling: Notation style preference (traditional vs simplified)
-└── Layout Calculation Requirements:
-    ├── Extended grace note sequence: Long pattern management
-    ├── Complex beaming and grouping: Advanced visual organization
-    ├── Space-efficient layout: Optimization for lengthy sequences
-    └── Traditional notation style: Historical accuracy preservation
+Taorluath Grace Note Pattern:
+├── Grace 1: Low G (always written, may be omitted in performance)
+├── Grace 2: D (always played)
+├── Grace 3: Low G (always played)
+├── Grace 4: E (conditionally played based on principal note)
+├── Principal Note: Original note (any pitch)
+└── Performance Rules:
+    ├── If prior note == Low G, first grace note omitted in execution but still notated
+    └── E grace note only played if principal note < E
 ```
 
 ## Drum Embellishments
@@ -485,14 +637,18 @@ CrunluathEmbellishment : PipeBandEmbellishment
 DrumEmbellishment : Embellishment
 ├── Musical Properties (Drum Context)
 │   ├── rudimentName: Standard drum rudiment classification
-│   └── stickingPattern: Hand coordination sequence specification
+│   ├── stickingPattern: Hand coordination sequence specification
+│   └── handRelationship: Hand coordination rules
 ├── Layout Properties (Drum-Specific)
 │   ├── stemDirection: Grace note stem direction (upward/downward)
 │   ├── stickHeightVariation: Visual height differentiation
-│   └── rudimentSpacing: Drum-specific spacing strategy
+│   ├── rudimentSpacing: Drum-specific spacing strategy
+│   └── handAssignmentInheritance: Automatic hand coordination
 └── Layout Methods (Drum-Specific Behavior)
     ├── calculateStickHeights: Visual height determination
-    └── optimizeForRudimentFlow: Technical execution enhancement
+    ├── swapHandsWithPrincipal: Automatic hand coordination
+    ├── optimizeForRudimentFlow: Technical execution enhancement
+    └── validateHandPattern: Ergonomic pattern validation
 ```
 
 ### Specific Drum Embellishment Types
@@ -689,12 +845,61 @@ Note Layout Integration Architecture:
 ```
 EmbellishmentValidationRules
 ├── graceNoteCompatibility: Grace note relationship validation
-├── fingeringPossibility: Technical execution feasibility for pipe band embellishments
+├── fingeringPossibility: Technical execution feasibility for bagpipe embellishments
 ├── traditionalAccuracy: Cultural and historical accuracy validation
 ├── layoutFeasibility: Spatial constraint satisfaction verification
 ├── performancePracticality: Playability assessment and verification
 ├── stylisticConsistency: Regional style adherence validation
-└── musicalIntegrity: Musical logic and theory preservation validation
+├── musicalIntegrity: Musical logic and theory preservation validation
+└── priorNoteConstraints: Previous note relationship validation
+```
+
+### Prior Note Constraint Validation
+
+**Prior Note Constraint Rules:**
+```
+PriorNoteConstraintRules:
+├── upToFDoublingRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: Up-to-F doublings can follow any pitch
+├── highGDoublingRule: PriorNoteLowerThanHighG
+│   └── Validation: Prior note must be any pitch lower than High G
+│   └── ValidPriorNotes: Low G, Low A, B, C, D, E, F
+│   └── Rationale: High G doublings require upward melodic movement
+├── highADoublingRule: PriorNoteLowerThanHighA
+│   └── Validation: Prior note must be any pitch lower than High A
+│   └── ValidPriorNotes: Low G, Low A, B, C, D, E, F, High G
+│   └── Rationale: High A doublings require upward melodic movement
+├── doubleStrikeRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: Double strikes can follow any pitch
+├── gripRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: Grips can follow any pitch
+│   └── Performance Note: If prior note is Low G, first grace note omitted in execution
+├── taorluathRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: Taorluaths can follow any pitch
+│   └── Performance Notes: 
+│       ├── If prior note is Low G, first grace note omitted in execution
+│       └── E grace note only played if principal note < E
+├── lightDThrowRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: Light D throws can follow any pitch
+│   └── Performance Note: If prior note is Low G, first grace note omitted in execution
+├── heavyDThrowRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: Heavy D throws can follow any pitch
+│   └── Performance Note: If prior note is Low G, first grace note omitted in execution
+├── lowABirlRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: Low A birls can follow any pitch
+│   └── Notation and Performance Rule: If prior note is Low A, first grace note completely omitted
+├── gGracenoteBirlRule: NoPriorNoteRestriction
+│   └── Validation: Always returns valid regardless of prior note pitch
+│   └── Rationale: G Gracenote birls can follow any pitch
+│   └── No Exceptions: All grace notes always written and played regardless of prior note
+└── otherEmbellishmentRules: Apply appropriate prior note constraints
 ```
 
 ### Cultural Sensitivity and Accuracy
@@ -713,8 +918,7 @@ EmbellishmentValidationRules
 - Cultural context provided for non-native practitioners
 - Respectful presentation of Scottish musical heritage
 
-This embellishment architecture treats decorative elements as integral properties of their principal notes while providing sophisticated layout intelligence for complex grace note patterns, hand assignments, and collision resolution. The system respects traditional pipe band terminology and cultural practices while enabling modern digital notation capabilities.
-
+This embellishment architecture treats decorative elements as integral properties of their principal notes while providing sophisticated layout intelligence for complex grace note patterns, hand assignments, and collision resolution. The system respects traditional bagpipe and drum terminology and cultural practices while enabling modern digital notation capabilities.
 
 ## 3.1.7 Note Group System Architecture
 
