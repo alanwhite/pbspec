@@ -340,157 +340,381 @@ Barline
 - Heavy (U+E034)
 - Dotted (U+E037)
 
-## 3.1.6 Embellishment System Architecture
+# Section 3.1.6 - Embellishment System Architecture (Updated)
 
-### Embellishment as Note Property
+## Embellishment as Note Property
 
 Embellishments are decorative musical elements that belong to individual notes rather than spanning between notes. They are implemented as properties of notes with sophisticated layout intelligence.
 
+### Base Embellishment Entity
+
+**Embellishment Component Architecture:**
 ```
 Embellishment (Abstract Base Class)
-├── Musical Properties
-│   ├── embellishmentType: EmbellishmentType
-│   ├── graceNotes: [GraceNote]
-│   ├── traditionalName: String?
-│   └── executionStyle: ExecutionStyle
-├── Layout Properties
-│   ├── graceNotePitchLayout: PitchLayoutStrategy
-│   ├── handAssignment: HandAssignment?           // For drums
-│   ├── distanceFromPrincipal: CGFloat
-│   ├── interGraceSpacing: GraceSpacingStrategy
-│   ├── verticalPlacement: VerticalPlacement
-│   └── collisionAvoidance: EmbellishmentCollisionStrategy
-└── Layout Methods
-    ├── calculateGraceNotePositions(principalNotePosition: CGPoint) -> [CGPoint]
-    ├── determineOptimalSpacing(staffContext: StaffContext) -> SpacingResult
-    ├── resolveCollisions(nearbyEmbellishments: [Embellishment]) -> CollisionResolution
-    └── validateLayoutFeasibility(layoutContext: LayoutContext) -> [ValidationError]
+├── Musical Properties (Domain Core)
+│   ├── embellishmentType: Classification of embellishment variant
+│   ├── graceNotes: Collection of grace note patterns
+│   ├── traditionalName: Cultural terminology preservation
+│   └── executionStyle: Performance interpretation guidance
+├── Layout Properties (Domain Embedded)
+│   ├── graceNotePitchLayout: Pitch positioning strategy
+│   ├── handAssignment: Drum-specific hand coordination data
+│   ├── distanceFromPrincipal: Spacing from main note
+│   ├── interGraceSpacing: Grace note internal spacing
+│   ├── verticalPlacement: Staff positioning requirements
+│   ├── collisionAvoidance: Spatial conflict resolution
+│   └── floatBeforeBarline: Visual positioning before barline when note is first in measure
+└── Layout Methods (Behavior Interface)
+    ├── calculateGraceNotePositions: Determine spatial coordinates
+    ├── determineOptimalSpacing: Context-aware spacing calculation
+    ├── resolveCollisions: Handle overlapping embellishments
+    ├── shouldFloatBeforeBarline: Determine if embellishment should appear before barline
+    └── validateLayoutFeasibility: Constraint validation
 ```
 
-### Pipe Band Embellishments
+## Pipe Band Embellishments
 
+### PipeBandEmbellishment Entity
+
+**Pipe Band Specific Architecture:**
 ```
 PipeBandEmbellishment : Embellishment
-├── Musical Properties
-│   ├── regionalStyle: PipeBandStyle     // Highland, Border, etc.
-│   ├── fingeringSequence: FingeringPattern
-│   └── traditionalNotation: Bool
-├── Layout Properties
-│   ├── gracePitchStrategy: GracePitchStrategy
-│   ├── fingeringOptimization: FingeringOptimization
-│   ├── staffPositionOverride: [StaffPosition]?
-│   └── beamingStrategy: GraceBeamingStrategy
-└── Layout Methods
-    ├── calculateGracePitches(principalPitch: Pitch) -> [Pitch]
-    ├── optimizeForFingeringFlow() -> FingeringOptimization
-    └── determineStaffPositions() -> [StaffPosition]
+├── Musical Properties (Cultural Context)
+│   ├── regionalStyle: Geographic and cultural tradition identifier
+│   ├── fingeringSequence: Technical execution pattern
+│   └── traditionalNotation: Historical accuracy preference
+├── Layout Properties (Pipe-Specific)
+│   ├── gracePitchStrategy: Pitch relationship calculation method
+│   ├── fingeringOptimization: Technical execution enhancement
+│   ├── staffPositionOverride: Manual positioning capability
+│   └── beamingStrategy: Grace note connection approach
+└── Layout Methods (Pipe-Specific Behavior)
+    ├── calculateGracePitches: Determine pitch relationships
+    ├── optimizeForFingeringFlow: Enhance technical execution
+    └── determineStaffPositions: Calculate vertical placement
 ```
 
-**Specific Pipe Band Embellishment Types:**
+### Specific Pipe Band Embellishment Types
 
+#### CutEmbellishment
+**Cut Embellishment Specification:**
 ```
 CutEmbellishment : PipeBandEmbellishment
-├── cutType: CutType                    // High G cut, A cut, etc.
-└── Layout Calculation Logic:
-    ├── Grace pitch: Determined by cut type and principal note
-    ├── Distance: Standard grace note spacing rules
-    ├── Vertical position: Above staff, specific clearance
-    └── Collision handling: Adjust spacing if other embellishments nearby
-
-StrikeEmbellishment : PipeBandEmbellishment  
-├── strikeNote: Pitch                   // Which note creates the strike
-└── strikeStyle: StrikeStyle
-
-DoublingEmbellishment : PipeBandEmbellishment
-├── doublingType: DoublingType          // Full, half, thumb
-├── graceSequence: [GraceNote]          // Low G, D, Low G pattern
-└── beamingStyle: GraceBeamStyle
-
-ThrowEmbellishment : PipeBandEmbellishment
-├── throwType: ThrowType                // D throw, high G throw
-└── fingerPattern: ThrowFingering
+├── cutType: Variant classification (High G cut, A cut, etc.)
+└── Layout Calculation Requirements:
+    ├── Grace pitch: Determined by cut type and principal note relationship
+    ├── Distance: Standard grace note spacing rules application
+    ├── Vertical position: Above staff with specific clearance requirements
+    └── Collision handling: Spacing adjustment for nearby embellishments
 ```
 
-### Drum Embellishments
+#### StrikeEmbellishment
+**Strike Embellishment Specification:**
+```
+StrikeEmbellishment : PipeBandEmbellishment  
+├── strikeNote: Pitch specification for strike execution
+├── strikeStyle: Style variant classification
+└── Layout Calculation Requirements:
+    ├── Grace note positioning: Placement before principal note
+    ├── Pitch relationships: Specific intervals for different strike types
+    ├── Beaming connections: Visual connection to principal note
+    └── Staff position optimization: Readability-focused placement
+```
 
+#### DoublingEmbellishment
+**Doubling Embellishment Specification:**
+```
+DoublingEmbellishment : PipeBandEmbellishment
+├── doublingType: Variant classification (Full, half, thumb)
+├── graceSequence: Grace note pattern specification (Low G, D, Low G)
+├── beamingStyle: Grace note connection approach
+└── Layout Calculation Requirements:
+    ├── Complex grace note sequence: Multi-note positioning
+    ├── Proper beaming: Connection across multiple grace notes
+    ├── Spacing optimization: Readability-focused arrangement
+    └── Collision avoidance: Adjacent embellishment coordination
+```
+
+#### ThrowEmbellishment
+**Throw Embellishment Specification:**
+```
+ThrowEmbellishment : PipeBandEmbellishment
+├── throwType: Variant classification (D throw, high G throw)
+├── fingerPattern: Technical execution specification
+└── Layout Calculation Requirements:
+    ├── Grace note pattern: Type-specific note arrangements
+    ├── Vertical positioning: Above staff placement
+    ├── Horizontal spacing: Pre-principal note positioning
+    └── Beaming style: Appropriate visual connections
+```
+
+#### TaorluathEmbellishment
+**Taorluath Embellishment Specification:**
+```
+TaorluathEmbellishment : PipeBandEmbellishment
+├── taorluathType: Variant classification (Regular, breabach)
+├── complexPattern: Multi-grace note sequence specification
+├── beamingPattern: Complex beaming style requirements
+└── Layout Calculation Requirements:
+    ├── Complex multi-grace positioning: Advanced spatial arrangement
+    ├── Sophisticated beaming: Grace note group connections
+    ├── Spacing optimization: Complex pattern accommodation
+    └── Staff position management: Readability preservation
+```
+
+#### CrunluathEmbellishment
+**Crunluath Embellishment Specification:**
+```
+CrunluathEmbellishment : PipeBandEmbellishment
+├── crunluathType: Variant classification (Regular, a mach, breabach)
+├── extendedPattern: Extended grace note sequence specification
+├── traditionalSpelling: Notation style preference (traditional vs simplified)
+└── Layout Calculation Requirements:
+    ├── Extended grace note sequence: Long pattern management
+    ├── Complex beaming and grouping: Advanced visual organization
+    ├── Space-efficient layout: Optimization for lengthy sequences
+    └── Traditional notation style: Historical accuracy preservation
+```
+
+## Drum Embellishments
+
+### DrumEmbellishment Entity
+
+**Drum-Specific Architecture:**
 ```
 DrumEmbellishment : Embellishment
-├── Musical Properties
-│   ├── rudimentName: String
-│   ├── stickingPattern: StickingSequence
-│   └── accentPattern: AccentPattern
-├── Layout Properties
-│   ├── handAssignment: HandAssignment
-│   ├── stickHeightVariation: StickHeightPattern
-│   ├── accentVisualization: AccentVisualization
-│   └── rudimentSpacing: RudimentSpacingStrategy
-└── Layout Methods
-    ├── assignOptimalHands(context: DrumContext) -> HandAssignment
-    ├── calculateStickHeights() -> [StickHeight]
-    └── optimizeForRudimentFlow() -> RudimentOptimization
+├── Musical Properties (Drum Context)
+│   ├── rudimentName: Standard drum rudiment classification
+│   └── stickingPattern: Hand coordination sequence specification
+├── Layout Properties (Drum-Specific)
+│   ├── stemDirection: Grace note stem direction (upward/downward)
+│   ├── stickHeightVariation: Visual height differentiation
+│   └── rudimentSpacing: Drum-specific spacing strategy
+└── Layout Methods (Drum-Specific Behavior)
+    ├── calculateStickHeights: Visual height determination
+    └── optimizeForRudimentFlow: Technical execution enhancement
 ```
 
-**Specific Drum Embellishment Types:**
+### Specific Drum Embellishment Types
 
+#### FlamEmbellishment
+**Flam Embellishment Specification:**
 ```
 FlamEmbellishment : DrumEmbellishment
-├── flamTiming: FlamTiming              // How tight/open
-└── Layout Calculation Logic:
-    ├── Hand assignment: Opposite hand from principal note
-    ├── Grace note height: Lower than principal stroke
-    ├── Horizontal offset: Precise positioning for flam appearance
-    └── Spacing: Tight spacing that shows the flam relationship
+├── graceNoteCount: Fixed at 1 grace note for flam
+├── handRelationship: OppositeHand (grace note always opposite from principal note)
+├── flamTiming: Temporal characteristics (tight/open execution)
+├── stemDirection: Upward (flam grace note stems always point upward)
+└── Layout Calculation Requirements:
+    ├── Single grace note positioning: Exactly one grace note before principal
+    ├── Opposite hand coordination: Grace note uses opposite hand from principal note
+    ├── Automatic hand swapping: When principal note hand changes, grace note automatically swaps
+    ├── Lower visual position: Grace note positioned lower than principal stroke
+    ├── Upward stem rendering: Grace note stem points upward
+    ├── Horizontal offset: Precise flam appearance positioning
+    ├── Hand assignment inheritance: Grace note hand derived from principal note hand
+    └── Tight spacing: Spacing that clearly demonstrates flam relationship
+```
 
+#### DragEmbellishment
+**Drag Embellishment Specification:**
+```
 DragEmbellishment : DrumEmbellishment  
-├── dragType: DragType                  // Single, double, etc.
-├── bounceCount: Int
-└── releaseStyle: DragRelease
+├── graceNoteCount: Fixed at 2 grace notes for standard drag
+├── handRelationship: OppositeHand (both grace notes opposite from principal note)
+├── stemDirection: Upward (distinguishes from open drag)
+└── Layout Calculation Requirements:
+    ├── Two grace note positioning: Standard drag bounce representation
+    ├── Opposite hand coordination: Both grace notes use opposite hand from principal note
+    ├── Automatic hand swapping: When principal note hand changes, both grace notes automatically swap
+    ├── Hand assignment inheritance: Grace note hands derived from principal note hand
+    ├── Upward stem rendering: Grace note stems point upward
+    ├── Tight spacing: Close grouping showing drag relationship
+    └── Visual distinction: Upward stems differentiate from open drag downward stems
 ```
 
-### Note Integration with Embellishments
-
+#### OpenDragEmbellishment
+**Open Drag Embellishment Specification:**
 ```
-Note (Updated with Embellishment)
-├── Musical Properties (Domain Core)
-│   ├── pitch: Pitch
-│   ├── duration: Duration
-│   ├── embellishment: Embellishment?    // Embellishment property
-│   ├── accidental: Accidental?
-│   ├── articulation: [Articulation]
-│   └── noteGroups: [NoteGroupID]
-├── Layout Properties (Domain Embedded)
-│   ├── [existing layout properties...]
-└── Domain Methods
-    ├── [existing methods...]
-    ├── calculateTotalWidth(layoutContext: LayoutContext) -> CGFloat
-    ├── calculateEmbellishmentLayout() -> EmbellishmentLayoutResult
-    └── getTotalLayoutBounds() -> CGRect
+OpenDragEmbellishment : DrumEmbellishment
+├── graceNoteCount: Fixed at 2 grace notes for open drag
+├── handRelationship: OppositeHand (grace notes always opposite from principal note)
+├── openingSpacing: Temporal spacing between the two grace notes
+└── Layout Calculation Requirements:
+    ├── Two grace note positioning: Exactly two grace notes before principal
+    ├── Opposite hand coordination: Grace notes use opposite hand from principal note
+    ├── Automatic hand swapping: When principal note hand changes, grace notes automatically swap
+    ├── Open spacing visualization: Clear temporal separation between grace notes
+    └── Hand assignment inheritance: Grace note hands derived from principal note hand
+```
+
+#### RoughEmbellishment
+**Rough Embellishment Specification:**
+```
+RoughEmbellishment : DrumEmbellishment
+├── graceNoteCount: Fixed at 3 grace notes for rough
+├── handRelationship: AlternatingPattern (starts opposite from principal, then alternates)
+├── handPattern: OppositeHand -> SameHand -> OppositeHand (relative to principal note)
+├── stemDirection: Upward (distinguishes rough embellishments)
+└── Layout Calculation Requirements:
+    ├── Three grace note positioning: Rough stroke cluster representation
+    ├── Alternating hand coordination: Grace notes alternate hands starting opposite from principal
+    ├── Automatic hand swapping: When principal note hand changes, entire alternating pattern swaps
+    ├── Hand assignment inheritance: First grace note opposite, subsequent notes alternate
+    ├── Upward stem rendering: Grace note stems point upward
+    ├── Cluster spacing: Tight grouping for rough appearance
+    ├── Pattern visualization: Clear indication of alternating hand pattern
+    └── Principal note connection: Clear relationship to main stroke
+```
+
+#### SwissRoughEmbellishment
+**Swiss Rough Embellishment Specification:**
+```
+SwissRoughEmbellishment : DrumEmbellishment
+├── swissPattern: Swiss-specific execution pattern
+├── strokeSequence: Characteristic Swiss rough stroke sequence
+├── traditionalStyle: Adherence to Swiss pipe band tradition
+├── stemDirection: Upward (consistent with rough embellishment family)
+└── Layout Calculation Requirements:
+    ├── Swiss-specific pattern: Traditional Swiss rough representation
+    ├── Cultural notation style: Authentic Swiss visual formatting
+    ├── Upward stem rendering: Grace note stems point upward
+    ├── Pattern recognition: Distinctive Swiss rough appearance
+    └── Traditional spacing: Culturally appropriate visual spacing
+```
+
+## Note Hierarchy with Instrument-Specific Properties
+
+### Base Note Entity
+
+**Abstract Note Base Class:**
+```
+Note (Abstract Base Class)
+├── Musical Properties (Universal)
+│   ├── noteType: Note type specification (crotchet, quaver, minim, etc.)
+│   ├── durationAdjustment: Synthetic playback timing adjustment (percentage)
+│   ├── embellishment: Optional embellishment property attachment
+│   ├── articulation: Performance instruction collection
+│   └── noteGroups: Reference collection to spanning relationships
+├── Layout Properties (Universal)
+│   ├── position: Spatial coordinate specification
+│   ├── spacingHints: Layout guidance parameters
+│   ├── visualStyle: Appearance customization options
+│   └── collisionAvoidance: Spatial conflict resolution hints
+└── Domain Methods (Universal Behavior Interface)
+    ├── withEmbellishment: Embellishment attachment operation
+    ├── withNoteType: Note type assignment (affects visual and base duration)
+    ├── withDurationAdjustment: Playback timing fine-tuning
+    ├── getBaseDuration: Calculate fundamental duration from note type
+    ├── getEffectiveDuration: Calculate final playback duration (base + adjustment)
+    ├── calculateTotalWidth: Comprehensive width calculation including embellishments
+    ├── calculateEmbellishmentLayout: Embellishment spatial arrangement
+    └── getTotalLayoutBounds: Complete spatial boundary determination
+```
+
+### Instrument-Specific Note Classes
+
+#### PipeNote
+**Pitched Instrument Note:**
+```
+PipeNote : Note
+├── Musical Properties (Pipe-Specific)
+│   ├── pitch: Fundamental pitch specification (required for pipes)
+│   └── accidental: Pitch modification specification
+├── Domain Methods (Pipe-Specific)
+│   ├── withPitch: Pitch assignment transformation
+│   ├── withAccidental: Accidental modification
+│   └── validatePitchRange: Instrument range validation
+```
+
+#### SnareDrumNote  
+**Unpitched Percussion Note:**
+```
+SnareDrumNote : Note
+├── Musical Properties (Snare-Specific)
+│   ├── hand: Hand assignment (Left, Right) - required for drums
+│   ├── stickTechnique: Playing technique (Regular, BackStick)
+│   └── stickHeight: Visual stick height indication
+├── Domain Methods (Snare-Specific)
+│   ├── withHand: Hand assignment transformation
+│   ├── withStickTechnique: Stick technique assignment (regular/back-stick)
+│   ├── swapHands: Automatic hand coordination with embellishments
+│   └── validateStickingPattern: Ergonomic pattern validation
+```
+
+#### TenorDrumNote
+**Multi-Pitched Percussion Note:**
+```
+TenorDrumNote : Note
+├── Musical Properties (Tenor-Specific)
+│   ├── drumPosition: Specific drum within tenor set (1, 2, 3, 4, etc.)
+│   ├── hand: Hand assignment (Left, Right) - required for drums
+│   └── stickHeight: Visual stick height indication
+├── Domain Methods (Tenor-Specific)
+│   ├── withDrumPosition: Drum selection within set
+│   ├── withHand: Hand assignment transformation
+│   ├── swapHands: Automatic hand coordination with embellishments
+│   └── validateReachability: Physical reachability validation
+```
+
+#### BassDrumNote
+**Single Unpitched Percussion Note:**
+```
+BassDrumNote : Note
+├── Musical Properties (Bass-Specific)
+│   └── hand: Hand assignment (Left, Right) - required for drums
+├── Domain Methods (Bass-Specific)
+│   ├── withHand: Hand assignment transformation
+│   ├── swapHands: Automatic hand coordination with embellishments
+│   └── validateStickingPattern: Ergonomic pattern validation
 ```
 
 ### Layout Integration
 
-Embellishment layout integrates seamlessly with note layout calculations:
-
+**Embellishment Layout Coordination:**
 ```
-Note Layout Integration
-├── calculateTotalWidth() includes embellishment space requirements
-├── calculateEmbellishmentLayout() handles grace note positioning
-├── getTotalLayoutBounds() encompasses embellishment bounds
-└── Collision detection considers embellishment spatial requirements
+Note Layout Integration Architecture:
+├── calculateTotalWidth: Includes embellishment spatial requirements
+├── calculateEmbellishmentLayout: Handles grace note positioning coordination
+├── getTotalLayoutBounds: Encompasses complete embellishment boundaries
+├── Collision detection: Considers embellishment spatial requirements
+└── Staff position calculations: Accounts for embellishment height requirements
 ```
 
-### Validation Integration
+## Validation Integration
 
+### EmbellishmentValidationRules
+
+**Validation Architecture:**
 ```
 EmbellishmentValidationRules
-├── graceNoteCompatibility: CompatibilityRule
-├── fingeringPossibility: FingeringRule      // For pipe band embellishments
-├── traditionalOrnamentation: TraditionRule   // Cultural accuracy
-├── layoutFeasibility: LayoutRule            // Spatial constraints
-└── performancePracticality: PracticalityRule // Playability assessment
+├── graceNoteCompatibility: Grace note relationship validation
+├── fingeringPossibility: Technical execution feasibility for pipe band embellishments
+├── traditionalAccuracy: Cultural and historical accuracy validation
+├── layoutFeasibility: Spatial constraint satisfaction verification
+├── performancePracticality: Playability assessment and verification
+├── stylisticConsistency: Regional style adherence validation
+└── musicalIntegrity: Musical logic and theory preservation validation
 ```
 
-This embellishment architecture treats decorative elements as integral properties of their principal notes while providing sophisticated layout intelligence for complex grace note patterns, hand assignments, and collision resolution.
+### Cultural Sensitivity and Accuracy
+
+**Regional Style Validation:**
+- Highland style embellishment patterns and conventions
+- Border piping traditions and variations
+- Competition vs traditional performance contexts
+- Educational progression appropriateness
+- Historical accuracy for traditional tunes
+
+**Traditional Terminology Preservation:**
+- Gaelic names maintained alongside English descriptions
+- Traditional fingering patterns documented and preserved
+- Regional pronunciation guides for embellishment names
+- Cultural context provided for non-native practitioners
+- Respectful presentation of Scottish musical heritage
+
+This embellishment architecture treats decorative elements as integral properties of their principal notes while providing sophisticated layout intelligence for complex grace note patterns, hand assignments, and collision resolution. The system respects traditional pipe band terminology and cultural practices while enabling modern digital notation capabilities.
+
 
 ## 3.1.7 Note Group System Architecture
 
@@ -1988,59 +2212,381 @@ PaginationService
 - Instrument ensemble synchronization requirements
 - Performance context adaptation (solo vs ensemble)
 
-### 3.4.2 Musical Analysis Services
+# Section 3.1.6 - Embellishment System Architecture (Updated)
 
-#### MusicalValidationService
-**Purpose**: Comprehensive validation of musical content and structure
+## Embellishment as Note Property
 
-**Service Interface:**
+Embellishments are decorative musical elements that belong to individual notes rather than spanning between notes. They are implemented as properties of notes with sophisticated layout intelligence.
+
+### Base Embellishment Entity
+
+**Embellishment Component Architecture:**
 ```
-MusicalValidationService
-├── validateMusicalDocument(UUID) -> [ValidationError]
-├── validateTune(UUID) -> [ValidationError]
-├── validatePart(UUID) -> [ValidationError]
-├── validateMusicalSystem(UUID) -> [ValidationError]
-├── validateMeasure(UUID) -> [ValidationError]
-├── validateTimeSignatureConsistency(UUID) -> [ValidationError]
-├── validateKeySignaturePropagation(UUID) -> [ValidationError]
-├── validateInstrumentCompatibility(UUID) -> [ValidationError]
-├── validateOrnamentPlacement(UUID) -> [ValidationError]
-├── validateBarlineSequence(UUID) -> [ValidationError]
-├── suggestMusicalImprovements(UUID) -> [ImprovementSuggestion]
-└── generateValidationReport(UUID) -> ValidationReport
-```
-
-**Validation Categories:**
-- Musical theory compliance (time signatures, key relationships)
-- Instrument-specific notation correctness
-- Ensemble synchronization requirements
-- Performance practicality assessment
-- Regional style convention adherence
-
-#### OrnamentAnalysisService
-**Purpose**: Context-aware ornament analysis and suggestion system
-
-**Service Interface:**
-```
-OrnamentAnalysisService
-├── analyzeOrnamentPlacement(UUID) -> OrnamentAnalysis
-├── suggestOrnamentVariations(UUID, StyleContext) -> [OrnamentSuggestion]
-├── validateOrnamentCompatibility(UUID) -> [ValidationError]
-├── optimizeOrnamentSpacing(UUID) -> SpacingOptimization
-├── analyzeOrnamentComplexity(UUID) -> ComplexityAnalysis
-├── compareOrnamentStyles([RegionalStyle]) -> StyleComparison
-├── generateOrnamentGuide(InstrumentType, SkillLevel) -> OrnamentGuide
-├── adaptOrnamentsForSkillLevel(UUID, SkillLevel) -> AdaptationResult
-├── detectOrnamentPatterns(UUID) -> [OrnamentPattern]
-└── exportOrnamentAnalysis(UUID, ExportFormat) -> ExportResult
+Embellishment (Abstract Base Class)
+├── Musical Properties (Domain Core)
+│   ├── embellishmentType: Classification of embellishment variant
+│   ├── graceNotes: Collection of grace note patterns
+│   ├── traditionalName: Cultural terminology preservation
+│   └── executionStyle: Performance interpretation guidance
+├── Layout Properties (Domain Embedded)
+│   ├── graceNotePitchLayout: Pitch positioning strategy
+│   ├── handAssignment: Drum-specific hand coordination data
+│   ├── distanceFromPrincipal: Spacing from main note
+│   ├── interGraceSpacing: Grace note internal spacing
+│   ├── verticalPlacement: Staff positioning requirements
+│   ├── collisionAvoidance: Spatial conflict resolution
+│   └── floatBeforeBarline: Visual positioning before barline when note is first in measure
+└── Layout Methods (Behavior Interface)
+    ├── calculateGraceNotePositions: Determine spatial coordinates
+    ├── determineOptimalSpacing: Context-aware spacing calculation
+    ├── resolveCollisions: Handle overlapping embellishments
+    ├── shouldFloatBeforeBarline: Determine if embellishment should appear before barline
+    └── validateLayoutFeasibility: Constraint validation
 ```
 
-**Cultural Sensitivity:**
-- Regional style variation recognition
-- Traditional vs modern ornament usage
+## Pipe Band Embellishments
+
+### PipeBandEmbellishment Entity
+
+**Pipe Band Specific Architecture:**
+```
+PipeBandEmbellishment : Embellishment
+├── Musical Properties (Cultural Context)
+│   ├── regionalStyle: Geographic and cultural tradition identifier
+│   ├── fingeringSequence: Technical execution pattern
+│   └── traditionalNotation: Historical accuracy preference
+├── Layout Properties (Pipe-Specific)
+│   ├── gracePitchStrategy: Pitch relationship calculation method
+│   ├── fingeringOptimization: Technical execution enhancement
+│   ├── staffPositionOverride: Manual positioning capability
+│   └── beamingStrategy: Grace note connection approach
+└── Layout Methods (Pipe-Specific Behavior)
+    ├── calculateGracePitches: Determine pitch relationships
+    ├── optimizeForFingeringFlow: Enhance technical execution
+    └── determineStaffPositions: Calculate vertical placement
+```
+
+### Specific Pipe Band Embellishment Types
+
+#### CutEmbellishment
+**Cut Embellishment Specification:**
+```
+CutEmbellishment : PipeBandEmbellishment
+├── cutType: Variant classification (High G cut, A cut, etc.)
+└── Layout Calculation Requirements:
+    ├── Grace pitch: Determined by cut type and principal note relationship
+    ├── Distance: Standard grace note spacing rules application
+    ├── Vertical position: Above staff with specific clearance requirements
+    └── Collision handling: Spacing adjustment for nearby embellishments
+```
+
+#### StrikeEmbellishment
+**Strike Embellishment Specification:**
+```
+StrikeEmbellishment : PipeBandEmbellishment  
+├── strikeNote: Pitch specification for strike execution
+├── strikeStyle: Style variant classification
+└── Layout Calculation Requirements:
+    ├── Grace note positioning: Placement before principal note
+    ├── Pitch relationships: Specific intervals for different strike types
+    ├── Beaming connections: Visual connection to principal note
+    └── Staff position optimization: Readability-focused placement
+```
+
+#### DoublingEmbellishment
+**Doubling Embellishment Specification:**
+```
+DoublingEmbellishment : PipeBandEmbellishment
+├── doublingType: Variant classification (Full, half, thumb)
+├── graceSequence: Grace note pattern specification (Low G, D, Low G)
+├── beamingStyle: Grace note connection approach
+└── Layout Calculation Requirements:
+    ├── Complex grace note sequence: Multi-note positioning
+    ├── Proper beaming: Connection across multiple grace notes
+    ├── Spacing optimization: Readability-focused arrangement
+    └── Collision avoidance: Adjacent embellishment coordination
+```
+
+#### ThrowEmbellishment
+**Throw Embellishment Specification:**
+```
+ThrowEmbellishment : PipeBandEmbellishment
+├── throwType: Variant classification (D throw, high G throw)
+├── fingerPattern: Technical execution specification
+└── Layout Calculation Requirements:
+    ├── Grace note pattern: Type-specific note arrangements
+    ├── Vertical positioning: Above staff placement
+    ├── Horizontal spacing: Pre-principal note positioning
+    └── Beaming style: Appropriate visual connections
+```
+
+#### TaorluathEmbellishment
+**Taorluath Embellishment Specification:**
+```
+TaorluathEmbellishment : PipeBandEmbellishment
+├── taorluathType: Variant classification (Regular, breabach)
+├── complexPattern: Multi-grace note sequence specification
+├── beamingPattern: Complex beaming style requirements
+└── Layout Calculation Requirements:
+    ├── Complex multi-grace positioning: Advanced spatial arrangement
+    ├── Sophisticated beaming: Grace note group connections
+    ├── Spacing optimization: Complex pattern accommodation
+    └── Staff position management: Readability preservation
+```
+
+#### CrunluathEmbellishment
+**Crunluath Embellishment Specification:**
+```
+CrunluathEmbellishment : PipeBandEmbellishment
+├── crunluathType: Variant classification (Regular, a mach, breabach)
+├── extendedPattern: Extended grace note sequence specification
+├── traditionalSpelling: Notation style preference (traditional vs simplified)
+└── Layout Calculation Requirements:
+    ├── Extended grace note sequence: Long pattern management
+    ├── Complex beaming and grouping: Advanced visual organization
+    ├── Space-efficient layout: Optimization for lengthy sequences
+    └── Traditional notation style: Historical accuracy preservation
+```
+
+## Drum Embellishments
+
+### DrumEmbellishment Entity
+
+**Drum-Specific Architecture:**
+```
+DrumEmbellishment : Embellishment
+├── Musical Properties (Drum Context)
+│   ├── rudimentName: Standard drum rudiment classification
+│   └── stickingPattern: Hand coordination sequence specification
+├── Layout Properties (Drum-Specific)
+│   ├── stemDirection: Grace note stem direction (upward/downward)
+│   ├── stickHeightVariation: Visual height differentiation
+│   └── rudimentSpacing: Drum-specific spacing strategy
+└── Layout Methods (Drum-Specific Behavior)
+    ├── calculateStickHeights: Visual height determination
+    └── optimizeForRudimentFlow: Technical execution enhancement
+```
+
+### Specific Drum Embellishment Types
+
+#### FlamEmbellishment
+**Flam Embellishment Specification:**
+```
+FlamEmbellishment : DrumEmbellishment
+├── graceNoteCount: Fixed at 1 grace note for flam
+├── handRelationship: OppositeHand (grace note always opposite from principal note)
+├── flamTiming: Temporal characteristics (tight/open execution)
+├── stemDirection: Upward (flam grace note stems always point upward)
+└── Layout Calculation Requirements:
+    ├── Single grace note positioning: Exactly one grace note before principal
+    ├── Opposite hand coordination: Grace note uses opposite hand from principal note
+    ├── Automatic hand swapping: When principal note hand changes, grace note automatically swaps
+    ├── Lower visual position: Grace note positioned lower than principal stroke
+    ├── Upward stem rendering: Grace note stem points upward
+    ├── Horizontal offset: Precise flam appearance positioning
+    ├── Hand assignment inheritance: Grace note hand derived from principal note hand
+    └── Tight spacing: Spacing that clearly demonstrates flam relationship
+```
+
+#### DragEmbellishment
+**Drag Embellishment Specification:**
+```
+DragEmbellishment : DrumEmbellishment  
+├── graceNoteCount: Fixed at 2 grace notes for standard drag
+├── handRelationship: OppositeHand (both grace notes opposite from principal note)
+├── stemDirection: Upward (distinguishes from open drag)
+└── Layout Calculation Requirements:
+    ├── Two grace note positioning: Standard drag bounce representation
+    ├── Opposite hand coordination: Both grace notes use opposite hand from principal note
+    ├── Automatic hand swapping: When principal note hand changes, both grace notes automatically swap
+    ├── Hand assignment inheritance: Grace note hands derived from principal note hand
+    ├── Upward stem rendering: Grace note stems point upward
+    ├── Tight spacing: Close grouping showing drag relationship
+    └── Visual distinction: Upward stems differentiate from open drag downward stems
+```
+
+#### OpenDragEmbellishment
+**Open Drag Embellishment Specification:**
+```
+OpenDragEmbellishment : DrumEmbellishment
+├── graceNoteCount: Fixed at 2 grace notes for open drag
+├── handRelationship: OppositeHand (grace notes always opposite from principal note)
+├── openingSpacing: Temporal spacing between the two grace notes
+└── Layout Calculation Requirements:
+    ├── Two grace note positioning: Exactly two grace notes before principal
+    ├── Opposite hand coordination: Grace notes use opposite hand from principal note
+    ├── Automatic hand swapping: When principal note hand changes, grace notes automatically swap
+    ├── Open spacing visualization: Clear temporal separation between grace notes
+    └── Hand assignment inheritance: Grace note hands derived from principal note hand
+```
+
+#### RoughEmbellishment
+**Rough Embellishment Specification:**
+```
+RoughEmbellishment : DrumEmbellishment
+├── graceNoteCount: Fixed at 3 grace notes for rough
+├── handRelationship: AlternatingPattern (starts opposite from principal, then alternates)
+├── handPattern: OppositeHand -> SameHand -> OppositeHand (relative to principal note)
+├── stemDirection: Upward (distinguishes rough embellishments)
+└── Layout Calculation Requirements:
+    ├── Three grace note positioning: Rough stroke cluster representation
+    ├── Alternating hand coordination: Grace notes alternate hands starting opposite from principal
+    ├── Automatic hand swapping: When principal note hand changes, entire alternating pattern swaps
+    ├── Hand assignment inheritance: First grace note opposite, subsequent notes alternate
+    ├── Upward stem rendering: Grace note stems point upward
+    ├── Cluster spacing: Tight grouping for rough appearance
+    ├── Pattern visualization: Clear indication of alternating hand pattern
+    └── Principal note connection: Clear relationship to main stroke
+```
+
+#### SwissRoughEmbellishment
+**Swiss Rough Embellishment Specification:**
+```
+SwissRoughEmbellishment : DrumEmbellishment
+├── swissPattern: Swiss-specific execution pattern
+├── strokeSequence: Characteristic Swiss rough stroke sequence
+├── traditionalStyle: Adherence to Swiss pipe band tradition
+├── stemDirection: Upward (consistent with rough embellishment family)
+└── Layout Calculation Requirements:
+    ├── Swiss-specific pattern: Traditional Swiss rough representation
+    ├── Cultural notation style: Authentic Swiss visual formatting
+    ├── Upward stem rendering: Grace note stems point upward
+    ├── Pattern recognition: Distinctive Swiss rough appearance
+    └── Traditional spacing: Culturally appropriate visual spacing
+```
+
+## Note Hierarchy with Instrument-Specific Properties
+
+### Base Note Entity
+
+**Abstract Note Base Class:**
+```
+Note (Abstract Base Class)
+├── Musical Properties (Universal)
+│   ├── noteType: Note type specification (crotchet, quaver, minim, etc.)
+│   ├── durationAdjustment: Synthetic playback timing adjustment (percentage)
+│   ├── embellishment: Optional embellishment property attachment
+│   ├── articulation: Performance instruction collection
+│   └── noteGroups: Reference collection to spanning relationships
+├── Layout Properties (Universal)
+│   ├── position: Spatial coordinate specification
+│   ├── spacingHints: Layout guidance parameters
+│   ├── visualStyle: Appearance customization options
+│   └── collisionAvoidance: Spatial conflict resolution hints
+└── Domain Methods (Universal Behavior Interface)
+    ├── withEmbellishment: Embellishment attachment operation
+    ├── withNoteType: Note type assignment (affects visual and base duration)
+    ├── withDurationAdjustment: Playback timing fine-tuning
+    ├── getBaseDuration: Calculate fundamental duration from note type
+    ├── getEffectiveDuration: Calculate final playback duration (base + adjustment)
+    ├── calculateTotalWidth: Comprehensive width calculation including embellishments
+    ├── calculateEmbellishmentLayout: Embellishment spatial arrangement
+    └── getTotalLayoutBounds: Complete spatial boundary determination
+```
+
+### Instrument-Specific Note Classes
+
+#### PipeNote
+**Pitched Instrument Note:**
+```
+PipeNote : Note
+├── Musical Properties (Pipe-Specific)
+│   ├── pitch: Fundamental pitch specification (required for pipes)
+│   └── accidental: Pitch modification specification
+├── Domain Methods (Pipe-Specific)
+│   ├── withPitch: Pitch assignment transformation
+│   ├── withAccidental: Accidental modification
+│   └── validatePitchRange: Instrument range validation
+```
+
+#### SnareDrumNote  
+**Unpitched Percussion Note:**
+```
+SnareDrumNote : Note
+├── Musical Properties (Snare-Specific)
+│   ├── hand: Hand assignment (Left, Right) - required for drums
+│   ├── stickTechnique: Playing technique (Regular, BackStick)
+│   └── stickHeight: Visual stick height indication
+├── Domain Methods (Snare-Specific)
+│   ├── withHand: Hand assignment transformation
+│   ├── withStickTechnique: Stick technique assignment (regular/back-stick)
+│   ├── swapHands: Automatic hand coordination with embellishments
+│   └── validateStickingPattern: Ergonomic pattern validation
+```
+
+#### TenorDrumNote
+**Multi-Pitched Percussion Note:**
+```
+TenorDrumNote : Note
+├── Musical Properties (Tenor-Specific)
+│   ├── drumPosition: Specific drum within tenor set (1, 2, 3, 4, etc.)
+│   ├── hand: Hand assignment (Left, Right) - required for drums
+│   └── stickHeight: Visual stick height indication
+├── Domain Methods (Tenor-Specific)
+│   ├── withDrumPosition: Drum selection within set
+│   ├── withHand: Hand assignment transformation
+│   ├── swapHands: Automatic hand coordination with embellishments
+│   └── validateReachability: Physical reachability validation
+```
+
+#### BassDrumNote
+**Single Unpitched Percussion Note:**
+```
+BassDrumNote : Note
+├── Musical Properties (Bass-Specific)
+│   └── hand: Hand assignment (Left, Right) - required for drums
+├── Domain Methods (Bass-Specific)
+│   ├── withHand: Hand assignment transformation
+│   ├── swapHands: Automatic hand coordination with embellishments
+│   └── validateStickingPattern: Ergonomic pattern validation
+```
+
+### Layout Integration
+
+**Embellishment Layout Coordination:**
+```
+Note Layout Integration Architecture:
+├── calculateTotalWidth: Includes embellishment spatial requirements
+├── calculateEmbellishmentLayout: Handles grace note positioning coordination
+├── getTotalLayoutBounds: Encompasses complete embellishment boundaries
+├── Collision detection: Considers embellishment spatial requirements
+└── Staff position calculations: Accounts for embellishment height requirements
+```
+
+## Validation Integration
+
+### EmbellishmentValidationRules
+
+**Validation Architecture:**
+```
+EmbellishmentValidationRules
+├── graceNoteCompatibility: Grace note relationship validation
+├── fingeringPossibility: Technical execution feasibility for pipe band embellishments
+├── traditionalAccuracy: Cultural and historical accuracy validation
+├── layoutFeasibility: Spatial constraint satisfaction verification
+├── performancePracticality: Playability assessment and verification
+├── stylisticConsistency: Regional style adherence validation
+└── musicalIntegrity: Musical logic and theory preservation validation
+```
+
+### Cultural Sensitivity and Accuracy
+
+**Regional Style Validation:**
+- Highland style embellishment patterns and conventions
+- Border piping traditions and variations
 - Competition vs traditional performance contexts
-- Educational progression recommendations
-- Historical accuracy assessment
+- Educational progression appropriateness
+- Historical accuracy for traditional tunes
+
+**Traditional Terminology Preservation:**
+- Gaelic names maintained alongside English descriptions
+- Traditional fingering patterns documented and preserved
+- Regional pronunciation guides for embellishment names
+- Cultural context provided for non-native practitioners
+- Respectful presentation of Scottish musical heritage
+
+This embellishment architecture treats decorative elements as integral properties of their principal notes while providing sophisticated layout intelligence for complex grace note patterns, hand assignments, and collision resolution. The system respects traditional pipe band terminology and cultural practices while enabling modern digital notation capabilities.
+
 
 ### 3.4.3 Performance and Optimization Services
 
@@ -2522,96 +3068,291 @@ EventHandlerChain
 - Memory-efficient event data structures
 - Background event processing with user notification
 
+# Section 4 - Data Layer Implementation (Updated)
 
-## 4. Data Layer Implementation
+## 4.1 Simplified Storage Architecture
 
-### 4.1 Local Storage Strategy
+### Two-Tier Storage Model for iOS/macOS
 
-#### 4.1.1 Platform-Specific Storage Solutions
-- **iOS/macOS**: Core Data entities with JSON serialization for complex objects
-- **Android**: Room database with type converters for complex types
-- **Windows**: Entity Framework Core with SQLite provider
-- **Linux**: SQLite with platform-specific bindings (Qt SQL or native C++)
+**Prerequisites**: iCloud account required for optimal experience (standard for 95%+ of target users)
 
-#### 4.1.2 Data Persistence Architecture
-**Primary Storage**: Local SQLite database for all user data
-**Document Storage**: JSON serialization for score documents
-**Audio Storage**: Platform-optimized audio formats (AAC, OGG, WAV)
-**Cache Management**: LRU cache for frequently accessed scores
-**Backup Strategy**: Automatic local backups with versioning
+Users can select between two storage approaches:
 
-### 4.2 Cloud Storage Integration
+#### 4.1.1 iCloud Container + Real-time Collaboration (Default/Recommended)
+- **Primary Storage**: CloudKit + CKShare integration with iCloud container
+- **Synchronization**: Automatic sync across all user's Apple devices using NSPersistentCloudKitContainer
+- **Collaboration**: Real-time collaborative editing between iOS/macOS users via CKShare
+- **Sharing UI**: Native iOS/macOS sharing interfaces (Messages, Mail, AirDrop)
+- **Conflict Resolution**: CloudKit automatic conflict resolution with custom musical logic
+- **Offline Support**: Local changes queued for sync when connection restored
+- **Document Versioning**: Native iCloud document versioning and "Revert To" functionality
+- **Zero Configuration**: Works automatically with user's existing iCloud account
 
-#### 4.2.1 Universal Cloud Support Strategy
+#### 4.1.2 File Provider + Universal Cloud Support (Advanced Users)
+- **Architecture**: Document-based app using UIDocument/NSDocument framework
+- **Cloud Providers**: Universal support (OneDrive, Google Drive, Dropbox, Box, etc.)
+- **File Integration**: Files appear as native directories through File Provider extensions
+- **Collaboration**: File system-based collaboration through shared cloud folders
+- **Conflict Handling**: Cloud provider native conflict resolution (file versioning)
+- **Cross-Platform**: Works with any cloud provider across all platforms
+- **Use Cases**: Enterprise requirements, cross-platform band collaboration, power user preferences
 
-**iOS/macOS - Document Provider Framework**
-- Automatic support for any installed File Provider extension
-- Unified interface works with iCloud, Google Drive, Dropbox, OneDrive, Box, etc.
-- No provider-specific code required in app
-- User chooses destination through system picker
+### Android/Windows/Linux Storage Architecture
 
-**Android - Storage Access Framework**
-- Works with any DocumentsProvider implementation
-- Automatic support for Google Drive, Dropbox, OneDrive, etc.
-- Persistent URI permissions for reliable access
-- User selects provider through system interface
+**Three-Tier Model for Non-Apple Platforms:**
 
-**Windows - Hybrid Approach**
-- Native OneDrive integration through Windows.Storage APIs
-- Provider-specific APIs for Google Drive, Dropbox
-- Fallback to local file picker for unsupported providers
-- Manual provider registration required
+#### 4.1.3 Local Only + Manual Sharing
+- **Primary Storage**: Platform-native local storage (Room on Android, Entity Framework Core on Windows, SQLite on Linux)
+- **Document Format**: .pbscore files stored in application documents directory
+- **Sharing Method**: Export/import workflow for sharing via email, messaging, or file transfer
+- **File Operations**: Standard file system operations (copy, move, rename, delete)
+- **Backup Strategy**: Platform-native backup systems
+- **Offline Capability**: 100% offline functionality with no cloud dependency
 
-**Linux - API-Based Integration**
-- Provider-specific REST APIs
-- OAuth 2.0 authentication flow
-- Manual integration for each supported provider
-- Local storage as primary option
+#### 4.1.4 Platform-Native Cloud Integration
+- **Android**: Google Drive native integration with Storage Access Framework
+- **Windows**: OneDrive native integration with Windows Storage APIs
+- **Linux**: Cloud provider REST API integration (Google Drive, Dropbox, OneDrive)
+- **Collaboration**: File system-based collaboration through shared cloud folders
+- **Conflict Handling**: Cloud provider native conflict resolution
 
-#### 4.2.2 Conflict Resolution Strategy
-**Three-Way Merge**: Compare local, remote, and common ancestor versions
-**Last-Write-Wins**: Simple timestamp-based resolution for non-conflicting changes
-**Manual Resolution**: Present user with diff interface for complex conflicts
-**Backup Creation**: Always create backup before applying remote changes
+#### 4.1.5 File Provider + Universal Cloud Support
+- **Universal Support**: Any cloud provider through platform file systems
+- **Cross-Platform Compatibility**: Works with any cloud provider across all platforms
+- **Enterprise Integration**: Corporate cloud storage requirements
+- **Mixed Platform Bands**: Collaboration across different operating systems
 
-### Section 4.3 Pagination Data Management
+## 4.2 Document-Based Architecture Pattern
 
-#### 4.3.1 Caching Strategy
-**Layout Cache Structure:**
-- Page-level layout snapshots
-- System-level measurement cache
-- Font metrics cache per size/style
-- Dependency invalidation tracking
-- **Paper size dimension cache**
-- **Cross-platform paper size conversion tables**
-- **Pages[] assignment cache for quick lookup**
-- **TuneLines to page mapping cache**
+### Apple Ecosystem Implementation
 
-**Persistence Strategy:**
-- Transient cache for active session
-- Optional layout cache persistence for large documents
-- Platform-specific storage optimization
-- Memory pressure handling
-- **Efficient Pages[] structure serialization**
+**Core Framework Choice:**
+- **UIDocument (iOS)** and **NSDocument (macOS)** for both storage modes
+- Document browser integration for universal file access
+- Native document lifecycle management (auto-save, version history)
+- Automatic support for all File Provider extensions when in File Provider mode
+- iCloud container integration when in iCloud mode
+- Quick Look integration for score previews
 
-#### 4.3.2 Change Detection Infrastructure
-**Attribute Monitoring:**
-- Deep property change detection
-- Cascade effect analysis
-- Change event aggregation
-- Performance impact assessment
-- **Orientation change detection and validation**
-- **Cross-tune dependency tracking**
-- **Paper size change detection and global impact analysis**
-- **Regional paper size preference monitoring**
-- **Pages[] structure change tracking**
+**Repository Architecture:**
+```
+DocumentRepository Protocol:
+├── createNewDocument(title, storageMode) -> DocumentReference
+├── openDocument(documentReference) -> Document
+├── saveDocument(document) -> SaveResult  
+├── duplicateDocument(sourceReference) -> DocumentReference
+├── deleteDocument(reference) -> DeleteResult
+└── listDocuments(storageMode) -> [DocumentReference]
+```
 
-**Event Sourcing:**
-- Track all layout-affecting changes
-- Enable sophisticated undo/redo operations
-- Support collaborative editing scenarios
-- Audit trail for debugging complex layouts
-- **Pages[] structure versioning for rollback support**
+**Benefits of Simplified Apple Architecture:**
+- **Streamlined User Experience**: Only two clear choices instead of three
+- **iCloud Integration**: Leverages user's existing Apple ecosystem investment
+- **Professional Collaboration**: Real-time editing with other band members on Apple devices
+- **Advanced Flexibility**: File Provider mode for specific enterprise or cross-platform needs
+- **Reduced Complexity**: Eliminates rarely-used "local only" mode
+- **Better Performance**: iCloud container optimized for document-based apps
+
+### First Launch Experience
+
+**iCloud Account Detection:**
+```
+Startup Flow:
+├── Check iCloud account availability
+├── If iCloud available (95% of users):
+│   └── Default to iCloud Container mode with collaboration features
+├── If iCloud unavailable:
+│   ├── Prompt user to enable iCloud (recommended)
+│   └── Offer File Provider mode as alternative
+└── Advanced users can switch to File Provider mode in settings
+```
+
+**Prerequisites Communication:**
+- App Store description: "Requires iCloud account for document sync and collaboration"
+- First launch: Seamless setup for users with iCloud accounts
+- Clear explanation of collaboration benefits for iCloud users
+- File Provider option clearly marked as "Advanced" for specific use cases
+
+### File-Based Storage Rationale
+
+**Decision: Simple files over SQLite for document storage**
+
+**Why Files Are Better for Musical Scores:**
+- Scores are conceptually single documents (like Word docs or PDFs)
+- Natural file operations users expect (copy, move, rename, share, backup)
+- Platform file associations and Quick Look integration
+- Standard backup through file system operations (iCloud, File Provider backups)
+- No database complexity, migrations, or ORM overhead
+- Cross-platform sharing through standard file operations
+
+**Repository Implementation Pattern:**
+```
+iOS/macOS DocumentRepository:
+├── iCloud Container mode: CloudKit document storage with real-time sync
+├── File Provider mode: UIDocument/NSDocument with universal cloud support
+├── JSON serialization for .pbscore format in both modes
+├── Automatic conflict resolution through CloudKit or cloud provider
+├── Document validation and recovery procedures
+└── Cross-mode migration support for advanced users
+```
+
+## 4.3 Platform-Specific Storage Implementation
+
+### 4.3.1 iOS/macOS Implementation (Simplified)
+- **iCloud Container Mode**: CloudKit + CKShare for real-time collaboration, NSPersistentCloudKitContainer for automatic sync
+- **File Provider Mode**: UIDocument/NSDocument with automatic integration for all installed cloud providers
+- **App Preferences**: Lightweight Core Data store for app-level settings and recently opened files only
+- **Security**: Keychain for sensitive settings, app sandbox with iCloud container or File Provider access
+- **Migration Support**: Seamless switching between iCloud Container and File Provider modes
+
+### 4.3.2 Android Implementation  
+- **Room Database**: App preferences and metadata only
+- **Storage Access Framework**: Primary document access across all storage modes
+- **Intent Filters**: .pbscore file association and sharing integration
+- **Document Provider**: Integration with Google Drive, OneDrive, Dropbox
+- **Security**: Android Keystore for sensitive data, scoped storage compliance
+
+### 4.3.3 Windows Implementation
+- **Entity Framework Core**: App preferences with SQLite backing store
+- **WinUI Document Model**: Document-based app architecture
+- **File Type Association**: .pbscore registration in app manifest
+- **Cloud Integration**: Native OneDrive API with File Provider fallback
+- **Security**: Windows Credential Manager integration
+
+### 4.3.4 Linux Implementation
+- **SQLite**: Direct SQLite integration for app preferences
+- **File System Integration**: Standard file operations with cloud folder monitoring
+- **MIME Type Registration**: .pbscore file association through desktop files
+- **Cloud Provider APIs**: Direct REST API integration for major providers
+- **Security**: Platform keyring integration (GNOME Keyring, KWallet)
+
+## 4.4 Universal File Format Specification
+
+### 4.4.1 .pbscore File Format
+
+**Format Principles:**
+- **File Extension**: `.pbscore` (Pipe Band Score)
+- Single universal JSON format across all platforms
+- No platform-specific information or metadata
+- No compatibility modes or format variants
+- Pure musical content with universal layout properties
+- Human-readable and debuggable format
+
+**Example .pbscore Structure:**
+```json
+{
+  "formatVersion": "1.0",
+  "metadata": {
+    "title": "Scotland the Brave",
+    "composer": "Traditional",
+    "created": "2024-01-15T10:30:00Z",
+    "modified": "2024-01-16T14:22:00Z"
+  },
+  "documentLayout": {
+    "paperSize": "A4",
+    "orientation": "portrait", 
+    "margins": { "top": 20, "bottom": 20, "left": 15, "right": 15 }
+  },
+  "tunes": [
+    {
+      "id": "tune-1",
+      "title": "Scotland the Brave",
+      "type": "march",
+      "parts": [ /* musical content */ ]
+    }
+  ]
+}
+```
+
+### 4.4.2 Cross-Platform Compatibility Standards
+
+**Universal File Handling Requirements:**
+- Identical JSON structure read/written by all platforms
+- Platform file associations for .pbscore files
+- Email/cloud sharing compatibility across all platforms
+- No import/export complexity or conversion layers needed
+- Standard UTF-8 encoding for international character support
+
+**Excluded Information:**
+- Platform identifiers or application version metadata
+- Platform-specific layout preferences or rendering hints
+- Compatibility matrices or feature support flags
+- Any iOS/Android/Windows/Linux specific data structures
+- Cloud provider specific metadata or synchronization data
+
+### 4.4.3 File Sharing Integration
+
+**Platform-Specific File Association Setup:**
+
+**iOS/macOS UTI Declaration Requirements:**
+```
+Universal Type Identifier Configuration:
+├── UTTypeIdentifier: com.yourapp.pbscore
+├── UTTypeDescription: Pipe Band Score
+├── FileExtension: pbscore
+├── MIMEType: application/pbscore
+├── ConformsTo: public.data, public.content
+└── DocumentIconIntegration: Custom document icon registration
+```
+
+**Android Intent Filter Requirements:**
+```
+Intent Filter Configuration:
+├── Action: android.intent.action.VIEW
+├── Category: android.intent.category.DEFAULT
+├── MIMEType: application/pbscore
+├── Schemes: file, content (for multiple content sources)
+└── Priority: High priority for .pbscore file handling
+```
+
+**Windows File Association Requirements:**
+```
+File Type Association Configuration:
+├── Extension Category: windows.fileTypeAssociation
+├── FileType: .pbscore
+├── DisplayName: Pipe Band Score
+├── DefaultIcon: Application-specific icon
+└── ExecutableIntegration: Launch application with file parameter
+```
+
+**Linux MIME Type Registration:**
+```
+Desktop Entry Configuration:
+├── MIMEType: application/pbscore
+├── Categories: Audio, Music, Education
+├── FilePattern: *.pbscore
+├── IconTheme: Custom application icon
+└── DesktopEnvironment: Compatible with major Linux desktops
+```
+
+## 4.5 Data Migration and Backup Strategy
+
+### 4.5.1 Storage Mode Migration (Simplified for iOS/macOS)
+**Between iCloud Container and File Provider Mode:**
+1. Export current documents to neutral .pbscore files location
+2. Create backup in current storage system
+3. Switch repository implementation to target storage mode
+4. Import documents to new storage system with preserved metadata
+5. Verify data integrity and collaboration features in new mode
+6. Clean up temporary files (user confirmation for permanent deletion)
+
+**Migration Scenarios:**
+- **iCloud to File Provider**: For users needing specific cloud provider or enterprise requirements
+- **File Provider to iCloud**: For users wanting real-time collaboration features
+- **Seamless Process**: No data loss during migration, maintains document relationships
+
+### 4.5.2 Backup and Recovery
+**Automatic Backup Strategy:**
+- **iCloud Container Mode**: Automatic CloudKit backup with device sync and version history
+- **File Provider Mode**: Cloud provider native backup systems (OneDrive, Google Drive, etc.)
+- **Other Platforms**: Platform-native backup systems (Android backup, Windows backup)
+- **Manual Export**: Always available regardless of storage mode for additional safety
+
+**Recovery Procedures:**
+- **iCloud Mode**: Version recovery through CloudKit and "Revert To" functionality
+- **File Provider Mode**: Version recovery through cloud provider systems
+- **Corrupted Files**: Automatic detection and repair attempts for .pbscore files
+- **Emergency Export**: Always available for data rescue scenarios across all modes
 
 ## 5. Presentation Layer Architecture
 
@@ -2947,20 +3688,210 @@ EventHandlerChain
 
 ## 8. Export and File Format System
 
-### 8.1 Multi-Format Export Engine
+# Section 8.1 - Multi-Format Export Engine (Updated)
 
-#### 8.1.1 Supported Export Formats
-**PDF**: Vector-based output with embedded fonts
-**PNG**: High-resolution raster images with configurable DPI
-**SVG**: Scalable vector graphics for web compatibility
-**MIDI**: Basic playback support for audio preview
-**MusicXML**: Standard interchange format for score sharing
+## 8.1.1 Supported Export Formats
 
-#### 8.1.2 Export Quality Standards
-**Print Resolution**: 300+ DPI for professional printing
-**Font Embedding**: Proper font subset embedding in PDF
-**Color Management**: Consistent color reproduction across formats
-**Metadata Inclusion**: Title, composer, copyright information in exports
+### Native Format Export
+
+**Primary Format: .pbscore**
+- **Full Fidelity**: Complete preservation of all musical content and layout information
+- **Cross-Platform Compatibility**: Universal format readable by all platform implementations
+- **Human Readable**: JSON-based format for debugging and version control
+- **Future Proof**: Standard format that will remain accessible long-term
+- **Version Support**: Forward and backward compatibility through format versioning
+
+**Export Characteristics:**
+- Preserves all embellishments with complete instrument-specific execution details
+- Maintains exact layout preferences and pagination settings including floating embellishments
+- Includes complete metadata (title, composer, creation date, etc.)
+- Retains document structure (tunes, parts, systems, measures) with note type hierarchy
+- Preserves instrument-specific properties (hand assignments, stick techniques, drum positions)
+- Supports all note types (PipeNote, SnareDrumNote, TenorDrumNote, BassDrumNote)
+- Maintains embellishment-note relationships and hand coordination patterns
+
+### Professional Output Formats
+
+**PDF Export**
+- **Vector-Based Output**: Scalable graphics for all resolution requirements
+- **Font Embedding**: Complete SMuFL font subset embedding for universal compatibility
+- **Print Optimization**: 300+ DPI resolution for professional printing requirements
+- **Metadata Integration**: PDF metadata includes title, composer, copyright information
+- **Color Management**: Consistent color reproduction across different printers and displays
+- **Accessibility**: PDF/A compliance for long-term archival and accessibility requirements
+
+**PNG Export**
+- **High Resolution**: Configurable DPI settings (72, 150, 300, 600 DPI)
+- **Transparency Support**: Optional transparent backgrounds for flexible usage
+- **Color Depth**: 24-bit color with optional alpha channel
+- **Page Options**: Single page or multi-page export to separate files
+- **Compression**: Optimized PNG compression for file size efficiency
+- **Batch Export**: Multiple scores or pages exported simultaneously
+
+**SVG Export**
+- **Scalable Vector Graphics**: Infinite scalability without quality loss
+- **Web Compatibility**: Direct integration with web browsers and applications
+- **Text Preservation**: Selectable text where appropriate for accessibility
+- **Layer Support**: Organized SVG structure with logical grouping
+- **Font Options**: Embedded fonts or system font fallbacks
+- **Interactive Elements**: Optional interactive elements for web presentation
+
+### Audio and Interchange Formats
+
+**MIDI Export**
+- **Basic Playback Support**: MIDI file generation for audio preview and practice
+- **Instrument Mapping**: Appropriate MIDI instrument assignments for each pipe band instrument
+- **Tempo Preservation**: Accurate tempo markings and changes with duration adjustments
+- **Embellishment Interpretation**: Conversion of pipe band and drum embellishments to MIDI sequences
+- **Multi-Track Support**: Separate MIDI tracks for each instrument in ensemble scores
+- **Dynamics**: Basic dynamic markings converted to MIDI velocity changes
+- **Hand Assignment Translation**: Drum hand assignments converted to appropriate MIDI channel/velocity patterns
+- **Note Type Duration**: Accurate MIDI timing based on note types (crotchet, quaver, etc.) with synthetic adjustments
+
+**MusicXML Export**
+- **Standard Interchange**: Industry-standard format for music notation software compatibility
+- **Embellishment Support**: Pipe band and drum embellishments exported with grace note representations
+- **Layout Preservation**: Page layout and formatting information including floating embellishment positions
+- **Metadata Transfer**: Complete metadata preservation in MusicXML format
+- **Multi-Instrument**: Full ensemble score export with proper staff assignments
+- **Instrument-Specific Properties**: Hand assignments, stick techniques, and drum positions where supported
+- **Note Type Accuracy**: Proper note type representation (crotchet, quaver, etc.) with visual accuracy
+- **Limitations**: Some pipe band specific embellishments and drum hand coordination may require simplification
+
+## 8.1.2 Export Quality Standards
+
+### Print Resolution Standards
+**Professional Printing Requirements:**
+- **Minimum Resolution**: 300 DPI for professional print quality
+- **Recommended Resolution**: 600 DPI for high-end commercial printing
+- **Vector Priority**: PDF and SVG preferred for professional printing
+- **Color Accuracy**: CMYK color space support for commercial printing
+- **Paper Size Support**: Full range of standard and custom paper sizes
+- **Bleed Margins**: Configurable bleed areas for commercial printing requirements
+
+### Font and Typography Standards
+**SMuFL Font Embedding:**
+- **Complete Font Subsets**: All required musical symbols embedded in exports
+- **Fallback Strategies**: System font fallbacks for unsupported viewing systems
+- **Unicode Compliance**: Full Unicode support for international text content
+- **Font Licensing**: Respect for font licensing requirements in embedded exports
+- **Cross-Platform Consistency**: Identical rendering across different operating systems
+- **Accessibility**: Screen reader compatible text representation where applicable
+
+### Color Management and Consistency
+**Color Reproduction Standards:**
+- **ICC Profile Support**: Embedded color profiles for accurate reproduction
+- **Color Space Options**: RGB for screen display, CMYK for print production
+- **Accessibility Compliance**: High contrast options and colorblind-friendly palettes
+- **Monochrome Support**: Optimized black and white rendering for traditional printing
+- **Custom Color Schemes**: User-defined color schemes for branding or preference
+- **Print Preview**: Accurate print preview matching final output
+
+### Metadata and Copyright Protection
+**Comprehensive Metadata Inclusion:**
+- **Document Properties**: Title, composer, arranger, copyright information
+- **Creation Details**: Creation date, modification history, application version
+- **Performance Rights**: Copyright and performance rights information
+- **Contact Information**: Composer/arranger contact details where appropriate
+- **Custom Properties**: User-defined metadata fields for organizational purposes
+- **Watermarking**: Optional visible or invisible watermarking for copyright protection
+
+## 8.1.3 Export Configuration and Customization
+
+### Export Settings Management
+**User Preference Profiles:**
+- **Export Profiles**: Saved export configurations for different use cases
+- **Template Support**: Predefined export templates for common scenarios
+- **Batch Settings**: Consistent settings across multiple file exports
+- **Quality Presets**: Quick selection of quality levels (draft, standard, professional)
+- **Format-Specific Options**: Optimized settings for each export format
+- **Default Configuration**: Intelligent defaults based on export format and intended use
+
+### Advanced Export Options
+**Layout and Formatting Control:**
+- **Page Range Selection**: Export specific pages or page ranges
+- **Layout Modifications**: Temporary layout adjustments for export purposes
+- **Scaling Options**: Proportional scaling for different output sizes
+- **Margin Adjustments**: Export-specific margin modifications
+- **Header/Footer Control**: Optional headers and footers for exported documents
+- **Crop Marks**: Professional printing guides and registration marks
+
+### Batch Export Capabilities
+**Multi-Document Processing:**
+- **Batch File Export**: Process multiple .pbscore files simultaneously
+- **Format Combinations**: Export single source to multiple formats in one operation
+- **Progress Monitoring**: Real-time progress reporting for large batch operations
+- **Error Handling**: Graceful error handling with detailed error reporting
+- **Queue Management**: Queued processing for resource-intensive export operations
+- **Background Processing**: Non-blocking exports with notification upon completion
+
+## 8.1.4 Platform-Specific Export Integration
+
+### iOS/macOS Export Features
+**Native Integration:**
+- **Share Sheet Integration**: Direct sharing through iOS/macOS share mechanisms supporting both iCloud and File Provider modes
+- **Print Services**: Direct integration with AirPrint and system print services
+- **Document Provider**: Save directly to user's chosen cloud storage (iCloud Container or File Provider)
+- **Quick Look Integration**: Instant preview of exported files with proper embellishment rendering
+- **Files App Integration**: Seamless integration with iOS Files app across storage modes
+- **Shortcuts Support**: iOS Shortcuts automation for export workflows with storage mode awareness
+
+### Android Export Features
+**Android-Specific Capabilities:**
+- **Share Intent**: Native Android sharing to any compatible application
+- **Storage Access Framework**: Save to any configured storage provider
+- **Print Framework**: Integration with Android print services
+- **Intent Handling**: Support for external application integration
+- **Background Export**: Android background service for large export operations
+- **Notification System**: Progress and completion notifications
+
+### Windows Export Features
+**Windows Integration:**
+- **File Association**: Automatic application association for exported formats
+- **Print Queue Integration**: Direct integration with Windows print spooler
+- **Cloud Provider APIs**: Native integration with OneDrive and other providers
+- **Task Scheduler**: Scheduled export operations for automated workflows
+- **PowerShell Support**: Command-line export capabilities for automation
+- **Windows Store Compliance**: All export features compliant with Store requirements
+
+### Linux Export Features
+**Linux Compatibility:**
+- **CUPS Integration**: Standard Linux printing system compatibility
+- **Desktop Integration**: FreeDesktop.org standard compliance for file associations
+- **Package Manager**: Export utilities available through standard package managers
+- **Command Line Tools**: Full command-line export interface for scripting
+- **Service Integration**: SystemD service integration for background operations
+- **Multiple Desktop Environments**: Support for GNOME, KDE, XFCE, and others
+
+## 8.1.5 Quality Assurance and Validation
+
+### Export Validation Process
+**Pre-Export Validation:**
+- **Content Integrity**: Verification that all musical content will export correctly
+- **Layout Validation**: Confirmation that layout will render properly in target format
+- **Font Availability**: Verification of required fonts for target format
+- **Size Limitations**: Check against format-specific size limitations
+- **Feature Compatibility**: Warning for features not supported in target format
+- **Performance Estimation**: Time and resource estimation for export operation
+
+### Post-Export Verification
+**Quality Assurance Checks:**
+- **Visual Comparison**: Automated comparison between source and exported content
+- **Metadata Verification**: Confirmation that all metadata transferred correctly
+- **File Integrity**: Validation of exported file structure and content
+- **Cross-Platform Testing**: Verification of exported files on different platforms
+- **Performance Metrics**: Monitoring of export speed and resource usage
+- **User Feedback Integration**: Collection and analysis of export quality feedback
+
+### Error Recovery and Reporting
+**Robust Error Handling:**
+- **Graceful Degradation**: Partial export completion when possible
+- **Detailed Error Reports**: Comprehensive error reporting with resolution suggestions
+- **Automatic Retry**: Intelligent retry mechanisms for transient failures
+- **Backup Creation**: Automatic backup before attempting complex exports
+- **Recovery Procedures**: Step-by-step recovery instructions for failed exports
+- **Support Integration**: Direct integration with technical support for complex issues
+
 
 ### 8.2 Cloud Export Integration
 
@@ -3167,42 +4098,265 @@ EventHandlerChain
 
 ### 13.3 Repository Architecture
 
-#### 13.3.1 iOS/macOS Repository Architecture with Swift 6
+# Section 13.3.1 - iOS/macOS Document-Based Repository Architecture
 
-**Modern Swift Package Architecture:**
-- **Swift 6 Workspace Structure**: Single workspace with iOS app target, macOS app target, and Swift 6 package targets
-- **Sendable Domain Models**: All shared domain logic implemented with Sendable conformance for thread safety
-- **Actor-Isolated Repositories**: Repository implementations using actor isolation for safe concurrent data access
-- **Structured Concurrency Integration**: All async operations using Swift 6's structured concurrency patterns
-- **Platform-Optimized Targets**: Separate app targets with Swift 6 concurrency optimizations for each platform
+## Project Structure and Organization
 
-**Enhanced Clean Architecture:**
-- **Domain Package**: Pure Swift 6 package with sendable entities, actor-based use cases, and protocol repositories
-- **Data Package**: Actor-isolated Core Data operations with sendable model transformations and CloudKit integration
-- **Presentation iOS**: SwiftUI with @Observable ViewModels and MainActor coordination for iOS-specific features
-- **Presentation macOS**: SwiftUI/AppKit integration with actor-safe state management and macOS-specific UI patterns
-- **Audio Package**: Actor-isolated AVAudioEngine operations with sendable audio data models and cross-platform optimization
+### Unified Workspace Architecture
 
-**Swift 6 Dependency Management:**
-- **Package.swift with Swift 6**: Updated package manifests targeting Swift 6 language mode
-- **Sendable Dependencies**: All package dependencies verified for Sendable conformance and actor safety
-- **Concurrency-Safe APIs**: Internal package APIs designed with Swift 6 concurrency in mind
-- **Testing with Actors**: Comprehensive test suites using Swift 6's testing improvements and actor isolation
-- **CI/CD Swift 6**: Build pipelines configured for Swift 6 compilation and concurrency checking
+**Workspace Component Organization:**
+```
+PipeBandApp.xcworkspace
+├── iOS App Target (iOS 17.0+ minimum deployment)
+├── macOS App Target (macOS 14.0+ minimum deployment)
+├── Shared UI Components (Cross-platform SwiftUI components)
+└── Swift Package Dependencies:
+    ├── PBDomain (Pure domain logic with sendable entities)
+    ├── PBDocument (Document-based architecture implementation)
+    ├── PBCloudKit (Optional collaboration features)
+    ├── PBAudio (Audio processing with actor isolation)
+    └── PBLayout (Layout calculation engine)
+```
 
-**Thread-Safe Code Sharing:**
-- **100% Sendable Shared**: Business logic, domain entities, and use cases with complete Sendable conformance
-- **Actor-Isolated Shared**: Audio processing, Core Data operations, and cloud sync with proper actor boundaries
-- **Platform-Adapted**: Navigation and layout patterns adapted for each platform's concurrency requirements
-- **Platform-Specific**: UI conventions and platform APIs with MainActor coordination where appropriate
-- **Concurrency Testing**: Shared business logic tested for thread safety with Swift 6's enhanced testing tools
+**Package Dependency Hierarchy:**
+```
+iOS/macOS Applications
+├── Depend on: PBDocument, PBCloudKit, PBAudio, PBLayout
+PBDocument Package
+├── Depends on: PBDomain
+PBCloudKit Package
+├── Depends on: PBDomain, PBDocument
+PBAudio Package
+├── Depends on: PBDomain
+PBLayout Package
+├── Depends on: PBDomain
+PBDomain Package
+└── Pure Swift with no external dependencies
+```
 
-**Development Workflow with Swift 6:**
-- **Strict Concurrency Mode**: All targets compiled with complete concurrency checking enabled
-- **Actor Isolation Reviews**: Code review process includes verification of proper actor isolation
-- **Performance Profiling**: Swift 6-optimized performance testing using latest Instruments capabilities
-- **Migration Strategy**: Incremental adoption of Swift 6 features with proper deprecation handling
-- **Cross-Platform Consistency**: Identical concurrency patterns across iOS and macOS implementations
+## Core Package Architecture
+
+### Domain Package (PBDomain)
+
+**Pure Domain Logic Architecture:**
+
+**Package Configuration Requirements:**
+- Swift Tools Version: 6.0 minimum
+- Platform Support: iOS 17.0+, macOS 14.0+
+- Concurrency: Strict concurrency checking enabled
+- Dependencies: None (pure domain logic)
+
+**Sendable Domain Entity Requirements:**
+```
+MusicalDocument Entity:
+├── Sendable conformance for thread safety
+├── Codable conformance for persistence
+├── Immutable value semantics
+├── Complete data integrity validation
+└── Cross-actor safe data transfer capability
+
+Tune Entity:
+├── Sendable and Codable conformance
+├── Hierarchical part relationship management
+├── Layout preference integration
+├── Metadata preservation requirements
+└── Musical content validation rules
+
+Embellishment Entity:
+├── Sendable conformance with immutable design
+├── Grace note pattern specification
+├── Cultural terminology preservation
+├── Execution style classification
+└── Layout hint integration capability
+```
+
+**Actor-Based Use Case Architecture:**
+```
+ScoreEditingCoordinator Actor:
+├── Thread-safe document state management
+├── Concurrent operation coordination
+├── Musical integrity validation
+├── Change tracking and history management
+└── Cross-actor communication protocols
+```
+
+### Document Package (PBDocument)
+
+**UIDocument/NSDocument Integration Architecture:**
+
+**Document Class Requirements:**
+```
+PipeBandScoreDocument:
+├── Platform-specific inheritance (UIDocument/NSDocument)
+├── MainActor isolation for UI thread safety
+├── Async document loading and saving operations
+├── Thread-safe document state management
+├── Actor coordination for editing operations
+└── Automatic change tracking and persistence
+```
+
+**Repository Implementation Architecture:**
+```
+DocumentRepository Actor:
+├── Actor isolation for thread-safe repository operations
+├── Document cache management with weak references
+├── Storage mode abstraction (local, iCloud, File Provider)
+├── Async file I/O operations with error handling
+├── Document lifecycle management
+└── Cross-storage-mode data migration support
+```
+
+**Document Operations Interface:**
+- createNewDocument: New document creation with intelligent storage mode selection (defaults to iCloud)
+- openDocument: Document loading from either iCloud Container or File Provider location
+- saveDocument: Persistent storage with change tracking and real-time sync (iCloud mode)
+- documentCache: Weak reference management for open documents across storage modes
+- storageMode: Dynamic storage mode determination and switching between iCloud/File Provider
+- collaborationCapabilities: Real-time collaboration available only in iCloud Container mode
+
+### CloudKit Package (PBCloudKit)
+
+**Real-Time Collaboration Architecture (iCloud Container Mode Only):**
+
+**CloudKitCollaborationManager Actor:**
+```
+CloudKitCollaborationManager:
+├── Actor isolation for CloudKit operations
+├── iCloud Container and CKDatabase management
+├── CKShare creation and management for document collaboration
+├── Real-time sync coordination with document changes
+├── Conflict resolution for concurrent editing scenarios
+├── Cross-device collaboration state synchronization
+└── Integration with iCloud Container document architecture
+```
+
+**Collaboration Operations (iCloud Mode Only):**
+- enableCollaboration: CKShare creation for document sharing within iCloud ecosystem
+- acceptShare: Invitation acceptance and shared document integration
+- syncChanges: Real-time document synchronization across Apple devices
+- resolveConflicts: Automated and manual conflict resolution with musical intelligence
+- managePermissions: Collaboration permission management for band members
+- collaborationStatus: Real-time collaboration availability detection
+
+### Audio Package (PBAudio)
+
+**Actor-Isolated Audio Processing:**
+
+**AudioProcessingEngine Actor:**
+```
+AudioProcessingEngine:
+├── Actor isolation for thread-safe audio operations
+├── AVAudioEngine integration with hardware sample rate matching
+├── Concurrent audio analysis using structured concurrency
+├── Real-time metronome generation and scheduling
+├── Background audio processing with MainActor UI coordination
+└── Memory-safe audio buffer management
+```
+
+**Audio Processing Capabilities:**
+- startMetronome: Tempo-accurate metronome with time signature support
+- analyzeIntonation: Parallel pitch analysis using task groups
+- recordPracticeSession: High-quality audio recording with metadata
+- processAudioBackground: Concurrent audio analysis operations
+- updateUIWithAnalysis: MainActor-coordinated UI updates
+
+### Layout Package (PBLayout)
+
+**Concurrent Layout Calculation Architecture:**
+
+**LayoutCalculationEngine Actor:**
+```
+LayoutCalculationEngine:
+├── Actor isolation for thread-safe layout calculations
+├── Parallel page layout processing using structured concurrency
+├── Font management and metrics caching with thread safety
+├── Embellishment layout coordination with collision resolution
+├── Memory-efficient layout result caching
+└── Cross-actor safe layout result communication
+```
+
+**Layout Calculation Capabilities:**
+- calculateDocumentLayout: Parallel page layout processing using task groups
+- calculateEmbellishmentLayout: Grace note positioning with collision resolution
+- optimizeLayoutPerformance: Background layout optimization with UI updates
+- cacheLayoutResults: Actor-isolated caching with automatic cleanup
+- validateLayoutIntegrity: Musical and spatial layout validation
+
+## Universal Storage Mode Support
+
+### Simplified Storage Mode Abstraction
+
+**Repository Factory Architecture:**
+```
+DocumentRepositoryFactory:
+├── Storage mode enumeration (iCloudContainer, fileProvider)
+├── Cloud provider classification for File Provider mode (oneDrive, googleDrive, dropbox, other)
+├── Repository instance creation based on selected storage mode
+├── Dynamic repository switching with data migration support
+└── MainActor coordination for repository selection UI
+```
+
+**Simplified Storage Mode Interface Contract:**
+```
+DocumentRepositoryProtocol:
+├── Document lifecycle operations (create, open, save, delete)
+├── Storage capability reporting (collaboration available in iCloud mode only)
+├── Cross-storage-mode migration support (iCloud ↔ File Provider)
+├── Error handling with storage-specific error types
+└── Performance characteristics documentation per storage mode
+```
+
+### Document Browser Integration
+
+**Simplified Document Browser Architecture:**
+
+**DocumentBrowser Requirements:**
+```
+PipeBandDocumentBrowserViewController:
+├── MainActor isolation for UI operations
+├── Two-tier storage mode support (iCloud Container + File Provider)
+├── Document creation workflow with intelligent storage mode defaults
+├── Async document opening with loading states
+├── iCloud account detection and setup guidance
+├── Error handling with user-friendly error presentation
+└── Integration with platform sharing and export capabilities
+```
+
+**Document Browser Capabilities:**
+- **Default iCloud Experience**: Automatic iCloud Container mode for users with iCloud accounts
+- **Advanced File Provider Option**: Available for users needing specific cloud providers
+- **Storage Mode Detection**: Automatic detection of iCloud availability
+- **Seamless Setup**: Zero-configuration experience for iCloud users
+- **Migration Support**: Easy switching between iCloud Container and File Provider modes
+- **Prerequisites Communication**: Clear guidance for users without iCloud accounts
+
+## Thread Safety and Performance
+
+### Concurrency Architecture Benefits
+
+**Complete Data Race Safety:**
+- Actor isolation eliminates data races at compile time through Swift's type system
+- Sendable conformance ensures safe cross-actor data transfer
+- Structured concurrency prevents callback complexity and memory leaks
+- MainActor coordination guarantees UI updates on the main thread
+- Automatic deadlock prevention through actor system design
+
+**Performance Optimization Strategies:**
+- TaskGroup operations enable parallel processing for layout calculations and audio analysis
+- Actor-isolated caches provide efficient data access with thread safety guarantees  
+- Background processing coordination with MainActor UI updates maintains responsiveness
+- Optimized JSON encoding and decoding with streaming for large documents
+- Lazy loading patterns for memory efficiency with large score collections
+
+**Memory Management Architecture:**
+- Automatic resource cleanup through structured concurrency task lifecycle management
+- Weak reference patterns for document caching prevent retain cycles
+- Lazy loading implementation for large document sections reduces memory pressure
+- Platform-optimized memory pressure handling with automatic cleanup triggers
+- Enhanced GPU memory management for Metal-accelerated rendering operations
+
+This architecture provides a robust, thread-safe foundation for document-based pipe band score editing while leveraging the full capabilities of modern Swift concurrency systems and maintaining compatibility with all three storage modes through clean architectural abstraction.
+
 
 #### 13.3.2 Other Platform Repositories
 
