@@ -237,6 +237,7 @@ Tune
 ├── Metadata
 │   ├── id: UUID
 │   ├── title: String
+│   ├── composer: String (optional)
 │   ├── tuneType: TuneType (March, Strathspey, Reel, Jig, etc.)
 │   ├── tempo: BPM (beats per minute)
 │   ├── keySignature: KeySignature
@@ -1689,12 +1690,12 @@ DomainErrorOccurredEvent:
 ```
 
 **Tune Structure:**
-```json
 {
   "tunes": [
     {
       "id": "tune-uuid-1",
       "title": "Scotland the Brave",
+      "composer": "Traditional",
       "tuneType": "march",
       "tempo": 80,
       "keySignature": {
