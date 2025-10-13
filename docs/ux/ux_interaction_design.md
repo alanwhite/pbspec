@@ -1,8 +1,8 @@
 # User Experience and Interaction Design Specification
 
 **Version:** 3.0  
-**Last Updated:** October 06, 2025  
-**Status:** Complete Integrated Specification (Mode-Free Design)
+**Last Updated:** October 13, 2025  
+**Status:** Complete Integrated Specification 
 
 ---
 
@@ -35,21 +35,28 @@ This document defines the **platform-agnostic user experience patterns** and **i
 
 ## 1. Core Interaction Principles
 
-#1.1 Interaction Philosophy
-Primary Principle: Word Processor for Music
+### 1.1 Interaction Philosophy
+**Primary Principle: Word Processor for Music**
+
 The application follows the familiar interaction model of a word processor, adapted for musical notation:
-Just Like Writing a Document:
 
-Type to Create: Click where you want a note and type (keyboard) or tap (touch) to add musical elements
-Select to Modify: Click or tap any element to select it, just like selecting text
-Style and Transform: Use tools, menus, or inspectors to modify selected elements
-Direct Manipulation: Drag to move, resize, or reposition elements visually
+**Just Like Writing a Document:**
 
-Core Behaviors:
+- Type to Create: Click where you want a note and type (keyboard) or tap (touch) to add musical elements
+- Select to Modify: Click or tap any element to select it, just like selecting text
+- Style and Transform: Use tools, menus, or inspectors to modify selected elements
+- Direct Manipulation: Drag to move, resize, or reposition elements visually
+
+**Core Behaviors:**
+
+The behaviours are instrument specific, in the sense that if the cursor is on a bagpipe staff there are different keyboard shortcuts and approach than when it's placed on a drum staff.
+
+```
 Add Content:
-├── Click on staff → Note appears at that pitch
-├── Type note letters (A-G) → Notes added sequentially
-├── Type durations (1, 2, 4, 8) → Changes next note length
+├── Click on staff → Cursor moves to staff position
+├── Bagpipe: Type note letters (A-G, Shift-A for high A, shift-G for high G) → Notes added sequentially
+├── Bagpipe: Type durations (1, 2, 4, 8) → Changes next note length
+├── Drum: Type from the left most key in the middle row (a on a uk keyboard) for a whole note on the right hand, next key in for half etc. Shift and key enters on the left hand
 └── Backspace/Delete → Remove notes like deleting text
 
 Modify Content:
@@ -58,48 +65,51 @@ Modify Content:
 ├── Right-click → Context menu (like in Word, Photoshop)
 ├── Inspector panel → Detailed properties (like formatting sidebar)
 └── Undo/Redo → Standard document editing behavior
-Natural Workflows:
-Adding Notes (Like Typing):
+```
 
-Click where you want to start on the staff
-Type note letters or click pitches
-Notes flow naturally like text on a page
-Current duration applies to new notes
-Press space to advance, backspace to delete
+**Natural Workflows:**
 
-Editing (Like Formatting Text):
+**Adding Notes (Like Typing):**
 
-Click a note to select it (highlights like selected text)
-Shift+click to select multiple notes (range selection)
-Ctrl/Cmd+click to add to selection (multi-select)
-Right-click for context menu with relevant actions
-Inspector shows properties, change them like font/paragraph settings
+- Click where you want to start on the staff
+- Type note letters or click pitches in a tool
+- Notes flow naturally like text on a page
+- Current duration applies to new notes
+- Press space to advance, backspace to delete
 
-Embellishments (Like Character Formatting):
+**Editing (Like Formatting Text):**
 
-Select a note (like selecting a word)
-Choose embellishment from menu or palette
-Embellishment applies to selection immediately
-Visible feedback like bold or italic being applied
+- Click a note to select it (highlights like selected text)
+- Shift+click to select multiple notes (range selection)
+- Ctrl/Cmd+click to add to selection (multi-select)
+- Right-click for context menu with relevant actions
+- Inspector shows properties, change them like font/paragraph settings
 
-Rationale:
+**Embellishments (Like Character Formatting):**
 
-Universally familiar paradigm - everyone has used a word processor
-Minimal learning curve for musicians who aren't software experts
-Natural mapping: musical elements are like words and phrases
-Supports rapid input for expert users (keyboard typing)
-Accessible for casual users (pointing and clicking)
-Same mental model across all platforms and input methods
-Consistent with other creative applications (Photoshop, Illustrator, Word)
+- Select one or more notes (like selecting words)
+- Choose embellishment from menu or palette or inspector
+- Embellishment applies to selection immediately
+- Visible feedback like bold or italic being applied
 
-What This Means for Design:
+**Rationale:**
 
-No mode indicators or mode switching required
-Tools and options always visible or contextually available
-Focus on content, not on application state
-Keyboard shortcuts enhance speed without being mandatory
-Touch and mouse interactions feel equivalent
-Learning one interaction teaches all similar actions
+- Universally familiar paradigm - everyone has used a word processor
+- Minimal learning curve for musicians who aren't software experts
+- Natural mapping: musical elements are like words and phrases
+- Supports rapid input for expert users (keyboard typing)
+- Accessible for casual users (pointing and clicking)
+- Same mental model across all platforms and input methods
+- Consistent with other creative applications (Photoshop, Illustrator, Word)
+
+**What This Means for Design:**
+
+- No mode indicators or mode switching required
+- Tools and options always visible or contextually available
+- Focus on content, not on application state
+- Keyboard shortcuts enhance speed without being mandatory
+- Touch and mouse interactions feel equivalent
+- Learning one interaction teaches all similar actions
 
 ### 1.2 Input Method Support
 
@@ -109,16 +119,87 @@ The application supports multiple simultaneous input methods, adapting intellige
 
 ```
 Input Methods (Platform-Dependent):
-├── Keyboard
-│   ├── Note entry via letter keys (A-G)
-│   ├── Duration selection via number keys
+├── Keyboard 
+│   ├── Bagpipe: Note entry via letter keys (A-G, with shift for high A and high G)
+│   ├── Bagpipe: Duration selection via number keys
+│   ├── Bass, Tenor or Snare Drum: Note or Rest entry via letter keys denoting note duration
+│   ├── Bass, Tenor or Snare Drum: Unshifted key is left hand, shifted is right, ctrl is rest
 │   ├── Navigation via arrow keys
 │   ├── Context-aware action shortcuts
 │   └── Paste Merge
-    ├── Merges copied content with existing
-    ├── Used for adding instruments to measures
-    └── Validates no conflicts
+├── Pointing Device (Mouse, Trackpad, Touch)
+│   ├── Click/tap to select
+│   ├── Right-click/long-press for context menu
+│   ├── Drag for multiple selection
+│   ├── Drag and Drop for moving selection
+│   └── Hover for tooltips (non-touch platforms)
+└── Touch Gestures (iOS, Android, Windows Touch)
+    ├── Tap to select
+    ├── Selection has grab areas to extend / reduce selection
+    ├── Long-press for context menu
+    ├── Pinch to zoom
+    ├── Two-finger pan to scroll
+    └── Swipe for navigation
 ```
+
+
+**Selectable Elements**
+
+```
+Selectable Elements (Hierarchical):
+├── Individual Notes and Rests
+├── Instrument Measure (selects all content in a measure for one instrument)
+├── Measure (selects the measure(s) across all Instruments)
+├── Systems (selects all measures across all Instruments in the selected System(s))
+├── Parts (selects all systems in part)
+├── Tune Header (selects header of a tune, Inspector shows modifiable items)
+├── Tunes (selects Tune Header and all parts in a Tune)
+└── Full Score (selects everything)
+```
+
+**Selection Methods**
+
+**Single Selection:**
+- **Click/Tap**: Single element selection
+- **Visual Feedback**: Selected element highlighted with selection color
+- **Deselection**: Click/tap on empty space or press Escape
+
+**Multiple Selection:**
+- **Shift+Click**: Extend selection (range selection for sequential elements)
+- **Modifier+Click**: Add/remove individual elements (⌘/Ctrl+Click)
+- **Drag Rectangle**: Select all elements within dragged area
+- **Select All**: Keyboard shortcut (⌘A/Ctrl+A) or menu command
+
+**Hierarchical Selection:**
+- **Click Measure**: Selects entire measure (all notes, rests)
+- **Click System**: Selects entire system (all instruments, all measures)
+- **Click Part Header**: Selects entire part (all systems)
+- **Context Determines Scope**: Single click on measure bar selects measure
+
+**Visual Indication Requirements:**
+
+```
+Selection States:
+├── Selected (Primary)
+│   ├── Highlight color (platform theme-aware)
+│   ├── Selection handles (for drag/resize)
+│   └── Bounding box (for groups)
+├── Hover/Focus (Non-Touch)
+│   ├── Subtle highlight or outline
+│   └── Cursor change (pointer, hand)
+├── Multi-Selection
+│   ├── All selected elements highlighted
+│   └── Selection count indicator
+└── Disabled (Cannot Select)
+    └── Dimmed appearance, no interaction
+```
+
+**Accessibility Requirements:**
+- Screen reader announces selection changes
+- Selection visible in high contrast modes
+- Keyboard-only navigation supports all selection methods
+- Focus indicator separate from selection indicator
+
 
 **Cross-Document Copy/Paste:**
 
@@ -126,16 +207,30 @@ Input Methods (Platform-Dependent):
 Cross-Document Behavior:
 ├── Clipboard Format
 │   ├── Internal format (full fidelity)
-│   ├── MusicXML (external compatibility)
-│   └── Text representation (fallback)
-├── Validation
-│   ├── Check instrument compatibility
-│   ├── Check time signature compatibility
-│   └── Prompt for adaptations if needed
-└── Adaptation
-    ├── Transpose if key signatures differ
-    ├── Adjust durations if time signatures differ
-    └── Map instruments if types differ
+└── Validation
+    └── Check instrument compatibility
+```
+
+**Copyable Elements:**
+
+```
+Copy/Paste Support:
+├── Individual Notes
+│   ├── Copies pitch, duration, embellishment
+│   ├── Pastes at cursor or replaces selection
+│   └── Validates compatibility with target
+├── Measures
+│   ├── Copies entire measure content (all instruments)
+│   ├── Copies time signature and barlines
+│   └── Pastes as new measure or replaces selection
+├── Systems
+│   ├── Copies all measures in system
+│   ├── All instruments included
+│   └── Pastes as new systems
+└── Parts
+    ├── Copies entire part structure
+    ├── All systems and instruments
+    └── Pastes as new part
 ```
 
 ---
@@ -149,25 +244,32 @@ Cross-Document Behavior:
 The application allows immediate note entry at any time, just like typing in a document:
 
 **Basic Entry Flow:**
-```
-Click on staff → Cursor appears at that pitch
-Type note letter (A-G) → Note appears
-Type duration (1, 2, 4, 8) → Changes duration for next note
-Continue typing → Notes flow sequentially
-Backspace/Delete → Removes previous note
-```
+
+- Click on staff → Cursor appears at that position
+- Type note letter (A-G, Shift-A, Shift-G) → Note appears
+- Type duration (1, 2, 4, 8) → Changes duration for next note
+- Cursor moves forward to next insert position, based on note duration
+- Continue typing → Notes flow sequentially
+- Backspace/Delete → Removes previous note
 
 **Entry with Existing Selection:**
 ```
-If Note(s) Selected:
-├── Type note letter → Replaces selection with new note
+If Note(s) or Rest(s) Selected:
+├── Type note or rest letter → Replaces selection with new note or rest placed at the start of the selected range
 ├── Type duration → Changes selected note(s) duration
-├── Paste → Replaces selection with pasted content
-└── Embellishment shortcut → Attaches to selection
+├── Paste → Replaces selection with pasted content if compatible with instrument
+└── Embellishment shortcut → toggles embellishment presence
 
-If Measure Selected:
+If Measure for all Instruments in the System Selected:
+├── Shortcut key to Insert Measure and all Instruments before
+├── Shortcut key to Insert Measure and all Instruments before
+├── Shortcut keys to mark Measure as 1st, 2nd, 3rd or 4th time only
+├── Paste → Replaces measure if copied data represents measure for all instruments
+└── Click on Instrument staff → Deselects measure, positions cursor
+
+If Measure for individual Instrument Selected:
 ├── Type note letter → Replaces measure content with new note
-├── Paste → Replaces measure content
+├── Paste → Replaces measure content if compatible with Instrument type
 └── Click on staff → Deselects measure, positions cursor
 
 If Nothing Selected:
@@ -179,11 +281,10 @@ If Nothing Selected:
 - Cursor (insertion point) always visible when no selection
 - Selected elements highlighted (like selected text)
 - New content appears immediately as you type
-- Duration tool indicator shows what length notes will be
+- Duration tool indicator shows what length notes will be if cursor on bagpipe instrument staff
 
 **Rationale:**
 - Identical mental model to word processing: click where you want content, start typing
-- No mode switching required - actions always available
 - Selection acts as target for replacement (like selecting text and typing over it)
 - Cursor acts as insertion point when nothing selected
 - Rapid workflow: click-type-click-type without interruption
@@ -191,10 +292,10 @@ If Nothing Selected:
 - Keyboard shortcuts enhance speed without being mandatory
 
 **Platform Implementation Notes:**
-- Click/tap positioning must be accurate to staff line/space
+- Click/tap positioning must be accurate to staff space
 - Cursor visibility must be clear (blinking vertical line)
 - Selection highlight must be distinct from cursor
-- Duration tool state must be persistently visible
+- Duration tool state must be persistently visible if cursor on bagpipe staff
 - Undo must work seamlessly (Ctrl/Cmd+Z at any time)
 
 ### 2.2 Note Entry Actions (Platform-Agnostic)
@@ -206,15 +307,14 @@ All platforms must support these conceptual actions through native input methods
 #### 2.2.1 Insert Note Action
 
 **Trigger Options (Platform Implements Native Method):**
-- **Keyboard**: Press note letter key (A-G)
+- **Keyboard**: Press note letter key (A-G, Shift-A, Shift-G) for bagpipes, or hand and duration for drum notes and rests
 - **Click/Tap**: Click on staff line/space
 - **Context Menu**: Right-click > Insert Note > [pitch]
-- **Voice**: "Insert D quarter note" (accessibility)
 
 **Behavior:**
 - If cursor visible (no selection): Inserts note at cursor position
 - If note(s) selected: Replaces selection with new note
-- If measure selected: Replaces measure content, starts at beginning
+- If measure for individual instrument selected: Replaces measure content, starts at beginning
 - Duration determined by current duration tool setting
 - Cursor advances to next logical position after insertion
 
@@ -225,7 +325,7 @@ All platforms must support these conceptual actions through native input methods
 
 **Platform Implementations:**
 - **iOS/macOS**: Keyboard shortcut, toolbar buttons, tap on staff, Apple Pencil stroke
-- **Android**: Hardware keyboard (if present), tap on staff, on-screen piano
+- **Android**: Hardware keyboard (if present), tap on staff, on-screen palette
 - **Windows**: Keyboard shortcut, ribbon button, click on staff, Surface Pen
 - **Linux**: Keyboard shortcut, toolbar button, click on staff, stylus (if present)
 
@@ -251,13 +351,13 @@ All platforms must support these conceptual actions through native input methods
 #### 2.2.3 Position Cursor for Entry
 
 **Conceptual Triggers:**
-- **Click/Tap on Staff**: Positions cursor at that pitch location
-- **Arrow Keys**: Moves cursor up/down (pitch), left/right (timing)
+- **Click/Tap on Staff**: Positions cursor at that staff location
+- **Arrow Keys**: Up/down moves cursor between instruments measures including to adjacent system, left/right moves cursor to the prior/next logical note position
 - **Click Empty Space**: Deselects current selection, positions cursor
 
 **Behavior:**
 - Cursor appears as blinking vertical line at position
-- Cursor height indicates pitch on staff
+- Cursor height is the height of the 5 line staff
 - Cursor position determines where next note appears
 - Clicking staff while note selected deselects and moves cursor
 
@@ -292,17 +392,16 @@ For experienced users, enable rapid keyboard-only note entry without interruptio
 ```
 Rapid Entry Workflow:
 ├── Click on staff to position cursor (one time)
-├── Press note letter (A-G) → Inserts note at cursor position
-├── Press duration number (1, 2, 4, 8) → Changes duration for next note
-├── Press Up/Down arrow → Transposes last note (or moves cursor pitch)
-├── Press Space/Right arrow → Advances cursor to next beat position
-├── Press modifier + letter → Adds accidental (sharp/flat)
+├── Bagpipe: Press note letter (A-G, Shift-A, Shift-G) → Inserts note at cursor position and moves cursor to next logical position
+├── Bagpipe: Press duration number (1, 2, 4, 8) → Changes duration for next note
+├── Press Up/Down arrow → Moves cursor to prior/next instrument staff at same horizontal position
+├── Press Space/Right arrow → Advances cursor to next logical note input position
 ├── Press Backspace/Delete → Removes note at cursor, moves cursor back
 ├── Press Left arrow → Moves cursor back one position
 └── Continue typing → Notes flow rapidly without mouse interaction
 ```
 
-**Example: Entering a Simple Melody:**
+**Example: Entering a Simple Melody (Bagpipe):**
 ```
 User Actions:                          Result:
 1. Click on staff at measure 1        → Cursor positioned
@@ -319,18 +418,8 @@ Total: 9 keystrokes for 5 notes with 2 duration changes
 
 **Advanced Rapid Entry:**
 ```
-Accidentals:
-├── Type "Shift+=" (or platform sharp key) → Next note will have sharp
-├── Type "-" (or platform flat key) → Next note will have flat
-└── Type "N" (or platform natural key) → Next note will have natural
-
-Articulation:
-├── Type "." → Adds staccato to last note
-├── Type ">" → Adds accent to last note
-└── Type "_" → Adds tenuto to last note
-
 Navigation:
-├── Space → Advances cursor by one beat
+├── Space → Advances cursor to next beat, including to next measure if no more in current measure
 ├── Tab → Jumps cursor to next measure
 ├── Shift+Tab → Jumps cursor to previous measure
 ├── Home → Jumps cursor to start of measure
@@ -370,7 +459,8 @@ For touch and stylus-enabled platforms, provide direct manipulation that feels n
 ```
 Direct Entry Workflow:
 ├── Tap duration tool in palette → Sets duration for next entry
-├── Tap on staff line/space → Inserts note at that pitch
+├── Tap on staff line/space → moves cursor to staff position
+├── Tap on note tool → inserts note at current cursor position
 ├── Drag vertically on existing note → Changes pitch
 ├── Drag horizontally on note → Moves note timing position
 ├── Two-finger tap → Undo last action
@@ -378,18 +468,13 @@ Direct Entry Workflow:
 └── Pinch/spread on canvas → Zoom in/out
 ```
 
-**Note: No Mode Switching Required**
-- Tapping on staff always inserts a note (if duration tool selected)
-- Tapping on existing note always selects it
-- Context (empty staff vs. existing note) determines action
-- Just like tapping in text: empty space positions cursor, existing text selects word
-
 **Touch Entry Behaviors:**
 
-**Insert New Note:**
+**Insert New Note (Bagpipe):**
 ```
 1. Ensure duration tool selected (quarter note button highlighted)
-2. Tap on staff at desired pitch
+2. Tap on staff to position cursor
+3. Tap required pitch from the note tool
 3. Note appears immediately
 4. Tap again to add next note
 5. Change duration tool anytime to vary note lengths
@@ -459,12 +544,6 @@ With Pinch Gesture (Optional):
 - Resting palm on screen ignored
 - Stylus takes priority over touch when both detected
 
-**Gesture Recognition (Future Enhancement):**
-- Handwriting note letters (A-G) creates notes
-- Drawing grace note pattern inserts embellishment
-- Circular motion over note adds articulation
-- Reserved for future implementation
-
 **Rationale:**
 - Direct manipulation feels natural on touch devices
 - No need for keyboard on tablet/phone
@@ -473,11 +552,204 @@ With Pinch Gesture (Optional):
 - Stylus provides precision for detailed work
 - No mode switching - context determines behavior
 
+## 3. Musical Editing Actions
 
+### 3.1 Note Editing Actions
 
-## 8. Context Menus
+**Common Note Operations:**
 
-### 8.1 Context Menu Principles
+#### 3.1.1 Delete Note(s)
+
+**Triggers:**
+- Select note(s) → Press Delete/Backspace
+- Select note(s) → Context menu → Delete
+- Select note(s) → Edit menu → Delete
+
+**Behavior:**
+- Removes note(s) from measure
+- Adjusts measure duration (may add rest)
+- Cursor moves to deletion position
+- Undo point created
+
+#### 3.1.2 Change Note Pitch
+
+**Triggers:**
+- Select note → Up/Down arrow keys (transpose)
+- Select note → Drag vertically (touch/mouse)
+- Select note → Inspector → Pitch picker
+
+**Behavior:**
+- Updates pitch within instrument range
+- Validates pitch compatibility
+- Visual update immediate
+- Cursor stays at note
+
+#### 3.1.3 Change Note Duration
+
+**Triggers:**
+- Select note(s) → Press duration number key (1, 2, 4, 8)
+- Select note(s) → Toolbar duration picker
+- Select note(s) → Inspector → Duration picker
+- Select note(s) → Context menu → Duration → [value]
+
+**Behavior:**
+- Updates note duration
+- Validates measure duration doesn't overflow
+- Adjusts subsequent note positions if needed
+- Cursor stays at note
+
+#### 3.1.4 Add Accidental
+
+**Triggers:**
+- Select note → Keyboard shortcut (platform-specific: # for sharp, b for flat)
+- Select note → Context menu → Add Accidental → [Sharp/Flat/Natural]
+- Select note → Inspector → Accidental picker
+- Select note → Toolbar accidental buttons
+
+**Behavior:**
+- Adds accidental to note (sharp, flat, natural)
+- Updates pitch accordingly
+- Renders accidental symbol before note
+- Cursor stays at note
+
+#### 3.1.5 Add Articulation
+
+**Triggers:**
+- Select note(s) → Context menu → Articulation → [type]
+- Select note(s) → Inspector → Articulation checkboxes
+- Select note(s) → Keyboard shortcut (platform-specific)
+- Select note(s) → Toolbar articulation palette
+
+**Articulation Types:**
+- Staccato (dot above/below note)
+- Accent (> symbol)
+- Tenuto (line above/below note)
+- Fermata (hold)
+- Dynamic markings (integrated with NoteGroup system)
+
+### 3.2 Measure Operations
+
+**Measure-Level Actions:**
+
+#### 3.2.1 Insert Measure
+
+**Triggers:**
+- Click between measures → Insert button
+- Select measure → Context menu → Insert Before/After
+- Keyboard shortcut (platform-specific)
+- Menu → Insert → Measure
+
+**Behavior:**
+- Inserts empty measure (with rests)
+- Inherits time signature from previous measure
+- Shifts subsequent measures
+- Cursor moves to new measure
+
+#### 3.2.2 Delete Measure
+
+**Triggers:**
+- Select measure → Delete/Backspace
+- Select measure → Context menu → Delete Measure
+- Menu → Edit → Delete Measure
+
+**Behavior:**
+- Removes entire measure (all instruments)
+- Shifts subsequent measures left
+- Confirmation dialog if measure contains notes
+- Cursor moves to deletion position
+
+#### 3.2.3 Change Time Signature
+
+**Triggers:**
+- Select measure → Context menu → Time Signature
+- Select measure → Inspector → Time Signature picker
+- Select measure → Keyboard shortcut (⌘T / Ctrl+T)
+- Double-click time signature → Edit dialog
+
+**Options:**
+- Apply to this measure only
+- Apply to this measure and all subsequent (cascade)
+- Apply to entire tune
+
+**Behavior:**
+- Updates time signature
+- Validates note durations still fit
+- May prompt to adjust existing content
+- Cursor stays at measure
+
+#### 3.2.4 Set Barline Type
+
+**Triggers:**
+- Select measure → Context menu → Barline → [type]
+- Select measure → Inspector → Opening/Closing Barline picker
+- Click barline directly → Picker appears
+
+**Behavior:**
+- Changes opening or closing barline type
+- Updates visual rendering
+- Handles repeat barlines with dots
+- Cursor stays at measure
+
+#### 3.2.5 Add Ending Brackets (Volta)
+
+**Triggers:**
+- Select measure → Keyboard shortcut (⌘⇧1 for 1st ending, ⌘⇧2 for 2nd)
+- Select measure → Context menu → Add Ending → [1st/2nd/etc.]
+- Select measure → Inspector → Volta picker
+
+**Behavior:**
+- Adds ending bracket above measure
+- Configures ending number and repeat behavior
+- Visual bracket rendered
+- Cursor stays at measure
+
+### 3.3 Part and Tune Operations
+
+**Higher-Level Actions:**
+
+#### 3.3.1 Add Part
+
+**Triggers:**
+- Toolbar → Add Part button
+- Menu → Insert → Part
+- Context menu on part list → Add Part
+
+**Behavior:**
+- Inserts new part (A, B, C, etc.)
+- Prompts for part letter/name
+- Inherits instruments from tune
+- Creates empty measures with default time signature
+
+#### 3.3.2 Reorder Parts
+
+**Triggers:**
+- Drag part header in part list (touch/mouse)
+- Part list context menu → Move Up/Down
+- Inspector → Part order spinner
+
+**Behavior:**
+- Changes play order
+- Updates navigation
+- Affects pagination
+
+#### 3.3.3 Add Tune
+
+**Triggers:**
+- Document menu → Add Tune
+- Toolbar → New Tune button
+- Context menu in tune list → Add Tune
+
+**Behavior:**
+- Creates new tune in score
+- Prompts for title, type, tempo
+- Creates default A part
+- Updates pagination
+
+---
+
+## 4. Context Menus
+
+### 4.1 Context Menu Principles
 
 **Context-Aware Menus:**
 - Menu items adapt to selected element type
@@ -486,7 +758,7 @@ With Pinch Gesture (Optional):
 - Submenus for categorical actions
 - Recently used actions promoted (optional)
 
-### 8.2 Note Context Menu
+### 4.2 Note Context Menu
 
 **Menu Structure:**
 ```
@@ -496,8 +768,8 @@ Note Context Menu:
 ├── Paste                                  (⌘V)
 ├── Delete                                 (Delete)
 ├── ─────────────
-├── Add Embellishment ▶
-│   ├── Pipe Band ▶
+├── Toggle Embellishment ▶
+│   ├── Bagpipe ▶
 │   │   ├── Doubling                       (⌘⇧D)
 │   │   ├── Throw                          (⌘⇧T)
 │   │   ├── Grip                           (⌘⇧L)
@@ -507,9 +779,6 @@ Note Context Menu:
 │       ├── Drag                           (⌘⇧G)
 │       ├── Rough                          (⌘⇧R)
 │       └── ... (all drum embellishments)
-├── Change Embellishment ▶ (if note has embellishment)
-│   └── [Same submenu as Add]
-├── Remove Embellishment (if note has embellishment)
 ├── ─────────────
 ├── Duration ▶
 │   ├── Whole Note                         (1)
@@ -533,7 +802,11 @@ Note Context Menu:
 └── Note Properties...                     (⌘I)
 ```
 
-### 8.3 Measure Context Menu
+Note that Toggle means if the referenced item is already present it is removed, if not present it is added. In the case of embellishments, if there is an existing embellishment that is not the menu item then it is replaced with that represented by the menu item.
+
+The contents of the context menu are also context sensitive, meaning that if the selected notes are on a bagpipe staff then under Toggle Embellishment shows the list of bagpipe relevant entries, no need for a sub-menu that says Bagpipe. For Drum instruments there is no Transpose entry for changing pitch but there is a Swap Hands instead.
+
+### 4.3 Measure Context Menu
 
 **Menu Structure:**
 ```
@@ -565,12 +838,12 @@ Measure Context Menu:
 └── Measure Properties...                  (⌘I)
 ```
 
-### 8.4 Platform Context Menu Adaptations
+### 4.4 Platform Context Menu Adaptations
 
 **iOS/macOS:**
 - Long-press triggers context menu (iOS)
 - Control+Click or Right-click triggers context menu (macOS)
-- Context menu appears as popover with rounded corners
+- Context menu appears as per the current design in the SDK
 - Submenus appear inline or as new popovers
 
 **Android:**
@@ -590,9 +863,9 @@ Measure Context Menu:
 
 ---
 
-## 9. Inspector Panel Design
+## 5. Inspector Panel Design
 
-### 9.1 Inspector Purpose
+### 5.1 Inspector Purpose
 
 **Properties Panel for Selected Elements (Like Word's Formatting Sidebar)**
 
@@ -689,7 +962,7 @@ Inspector Panel Contents (Context-Aware):
         └── Reset to Default (reset all to defaults)
 ```
 
-### 9.2 Inspector Placement (Platform-Specific)
+### 5.2 Inspector Placement (Platform-Specific)
 
 **Platform-Specific Placement:**
 
@@ -717,7 +990,7 @@ Inspector Panel Contents (Context-Aware):
   - Desktop environment theme integration
   - User-configurable position
 
-### 9.3 Inspector Interactions
+### 5.3 Inspector Interactions
 
 **Property Editing Patterns:**
 
@@ -796,7 +1069,7 @@ Multiple Items Selected:
 - High contrast support
 - Large touch targets on touch platforms
 
-### 9.4 Inspector Empty State
+### 5.4 Inspector Empty State
 
 **When Nothing Selected:**
 
@@ -825,9 +1098,9 @@ Empty State Content:
 
 ---
 
-## 10. Accessibility Requirements
+## 6. Accessibility Requirements
 
-### 10.1 Keyboard Navigation
+### 6.1 Keyboard Navigation
 
 **Full Keyboard Accessibility:**
 
@@ -961,7 +1234,7 @@ Complete Score Creation Without Mouse:
 - Support platform accessibility features
 - Use semantic HTML/native controls where possible
 
-### 10.2 Screen Reader Support
+### 6.2 Screen Reader Support
 
 **Screen Reader Announcements:**
 
@@ -989,7 +1262,7 @@ Announcement Requirements:
 - Progress indicators announce percentage
 - Keyboard shortcuts announced with actions
 
-### 10.3 Visual Accessibility
+### 6.3 Visual Accessibility
 
 **High Contrast and Color Blindness:**
 
@@ -1013,7 +1286,7 @@ Visual Accessibility Requirements:
     └── Maintains layout at all zoom levels
 ```
 
-### 10.4 Motor Accessibility
+### 6.4 Motor Accessibility
 
 **Reduced Motion and Alternative Inputs:**
 
@@ -1039,9 +1312,9 @@ Motor Accessibility Requirements:
 
 ---
 
-## 11. Search and Navigation
+## 7. Search and Navigation
 
-### 11.1 Search Functionality
+### 7.1 Search Functionality
 
 **Search Scope:**
 
@@ -1066,7 +1339,7 @@ Searchable Elements:
     └── Custom tags
 ```
 
-### 11.2 Search UI
+### 7.2 Search UI
 
 **Search Interface:**
 
@@ -1089,7 +1362,7 @@ Search UI Components:
     └── Save search as smart collection
 ```
 
-### 11.3 Navigation Shortcuts
+### 7.3 Navigation Shortcuts
 
 **Quick Navigation:**
 
@@ -1119,9 +1392,9 @@ Navigation Patterns:
 
 ---
 
-## 12. Responsive Design Patterns
+## 8. Responsive Design Patterns
 
-### 12.1 Screen Size Adaptation
+### 8.1 Screen Size Adaptation
 
 **Layout Adaptation Strategy:**
 
@@ -1153,7 +1426,7 @@ Screen Size Categories:
     └── Professional tool density
 ```
 
-### 12.2 Orientation Changes
+### 8.2 Orientation Changes
 
 **Portrait vs. Landscape:**
 
@@ -1177,7 +1450,7 @@ Screen Size Categories:
 - Adapt pagination if needed (user preference)
 - Maintain mode state through transition
 
-### 12.3 Input Method Adaptation
+### 8.3 Input Method Adaptation
 
 **Touch vs. Mouse/Trackpad:**
 
@@ -1204,9 +1477,9 @@ Input Adaptation:
 
 ---
 
-## 13. Error Handling and Validation UX
+## 9. Error Handling and Validation UX
 
-### 13.1 Validation Feedback
+### 9.1 Validation Feedback
 
 **Real-Time Validation:**
 
@@ -1229,7 +1502,7 @@ Validation Timing:
     └── Allow save with warnings
 ```
 
-### 13.2 Error Message Patterns
+### 9.2 Error Message Patterns
 
 **User-Friendly Error Messages:**
 
@@ -1266,7 +1539,7 @@ Severity Levels:
     └── Can be dismissed
 ```
 
-### 13.3 Validation Examples
+### 9.3 Validation Examples
 
 **Prior Note Constraint Validation:**
 
@@ -1298,9 +1571,9 @@ When duration exceeds time signature:
 
 ---
 
-## 14. Undo/Redo System
+## 10. Undo/Redo System
 
-### 14.1 Undo Scope
+### 10.1 Undo Scope
 
 **Undoable Actions:**
 
@@ -1329,7 +1602,7 @@ Undo System Coverage:
     └── Preference changes
 ```
 
-### 14.2 Undo UI Patterns
+### 10.2 Undo UI Patterns
 
 **Undo/Redo Access:**
 
@@ -1369,9 +1642,9 @@ Undo History Features:
 
 ---
 
-## 15. Platform-Specific UX Adaptations
+## 11. Platform-Specific UX Adaptations
 
-### 15.1 iOS/macOS UX Patterns
+### 11.1 iOS/macOS UX Patterns
 
 **Apple Human Interface Guidelines Compliance:**
 
@@ -1422,7 +1695,7 @@ macOS-Specific Patterns:
 
 **See `ios_macos_implementation.md` for detailed specifications**
 
-### 15.2 Android UX Patterns
+### 11.2 Android UX Patterns
 
 **Material Design Compliance:**
 
@@ -1452,7 +1725,7 @@ Android-Specific Patterns:
 
 **See `android_implementation.md` for detailed specifications**
 
-### 15.3 Windows UX Patterns
+### 11.3 Windows UX Patterns
 
 **Fluent Design System Compliance:**
 
@@ -1482,7 +1755,7 @@ Windows-Specific Patterns:
 
 **See `windows_implementation.md` for detailed specifications**
 
-### 15.4 Linux UX Patterns
+### 11.4 Linux UX Patterns
 
 **Desktop Environment Adaptation:**
 
@@ -1514,9 +1787,9 @@ Linux-Specific Patterns:
 
 ---
 
-## 16. Onboarding and Help
+## 12. Onboarding and Help
 
-### 16.1 First-Time User Experience
+### 12.1 First-Time User Experience
 
 **Onboarding Flow:**
 
@@ -1544,7 +1817,7 @@ Onboarding Steps:
     └── Exporting scores
 ```
 
-### 16.2 In-App Help
+### 12.2 In-App Help
 
 **Help Access Methods:**
 
@@ -1572,7 +1845,7 @@ Help System:
     └── Progress tracking
 ```
 
-### 16.3 Feature Discovery
+### 12.3 Feature Discovery
 
 **Progressive Disclosure:**
 
@@ -1602,9 +1875,9 @@ Feature Discovery:
 
 ---
 
-## 17. Settings and Preferences
+## 13. Settings and Preferences
 
-### 17.1 User Preferences
+### 13.1 User Preferences
 
 **Preference Categories:**
 
@@ -1646,7 +1919,7 @@ Settings Organization:
     └── Reset to defaults
 ```
 
-### 17.2 Workspace Customization
+### 13.2 Workspace Customization
 
 **Customizable UI Elements:**
 
@@ -1676,9 +1949,9 @@ Customization Options:
 
 ---
 
-## 18. Performance and Feedback
+## 14. Performance and Feedback
 
-### 18.1 Loading States
+### 14.1 Loading States
 
 **Progress Indication:**
 
@@ -1706,7 +1979,7 @@ Loading State Patterns:
     └── Manual sync trigger
 ```
 
-### 18.2 Action Feedback
+### 14.2 Action Feedback
 
 **Confirmation and Feedback:**
 
@@ -1736,9 +2009,9 @@ Feedback Mechanisms:
 
 ---
 
-## 19. UX Testing and Validation
+## 15. UX Testing and Validation
 
-### 19.1 Usability Testing
+### 15.1 Usability Testing
 
 **Testing Scenarios:**
 
@@ -1768,7 +2041,7 @@ Test Scenarios:
     └── File compatibility verification
 ```
 
-### 19.2 UX Metrics
+### 15.2 UX Metrics
 
 **Success Metrics:**
 
@@ -1799,9 +2072,9 @@ Measurable UX Goals:
 
 ---
 
-## 20. Summary and Best Practices
+## 16. Summary and Best Practices
 
-### 20.1 Core UX Principles Recap
+### 16.1 Core UX Principles Recap
 
 **Essential Interaction Patterns:**
 
@@ -1816,7 +2089,7 @@ Measurable UX Goals:
 9. **Undo Everything**: Comprehensive undo/redo support
 10. **Responsive Design**: Adapt to screen sizes and input methods
 
-### 20.2 Key UX Innovations
+### 16.2 Key UX Innovations
 
 **Unique Aspects of This Design:**
 
@@ -1847,7 +2120,7 @@ Innovative UX Features:
         Visual feedback with grace notes
 ```
 
-### 20.3 Implementation Priority
+### 16.3 Implementation Priority
 
 **Phase 1 (MVP UX):**
 - Continuous entry model (no modes)
@@ -1875,7 +2148,7 @@ Innovative UX Features:
 - Macro recording (optional)
 - AI-assisted features (optional)
 
-### 20.4 Platform Implementation References
+### 16.4 Platform Implementation References
 
 **Cross-Reference to Platform Specs:**
 
@@ -1908,7 +2181,7 @@ Each platform spec will detail:
 
 ---
 
-## 21. Glossary
+## 17. Glossary
 
 **UX Terms:**
 - **Continuous Entry**: Mode-free interaction where note entry works at any time
@@ -1935,869 +2208,9 @@ Each platform spec will detail:
 
 ---
 
-## 22. Document Maintenance
-
-**Version History:**
-- Version 2.0 (2025-10-03): Complete rewrite with mode-free design, context-aware shortcuts
-- Version 1.0 (2025-09-30): Initial UX specification (mode-based, superseded)
-
-**Change Process:**
-- UX changes require review and approval
-- Breaking UX changes require major version increment
-- Platform teams notified of all UX changes
-- User testing required for major interaction model changes
-
-**Review Schedule:**
-- Quarterly review of UX patterns and effectiveness
-- Annual comprehensive specification review
-- Ad-hoc reviews for significant feature additions
-- Post-release retrospectives for lessons learned
-
----
-
 **End of User Experience and Interaction Design Specification v2.0**
 
 This specification provides a complete, mode-free interaction model for the Scottish pipe band application. Platform-specific implementations must refer to their respective implementation documents for detailed UI component usage and platform-specific patterns while maintaining the core UX principles defined in this document.
 
-**Key Changes from v1.0:**
-- Removed mode-based editing (Selection Mode vs. Note Entry Mode)
-- Introduced continuous entry model (selection-is-replaced)
-- Added context-aware keyboard shortcuts
-- Enhanced embellishment workflow with shortcuts
-- Improved cursor management and insertion point logic
-- Added comprehensive shortcut discoverability features
-- Refined error handling and validation patterns Modifier keys for variants
-├── Pointing Device (Mouse, Trackpad, Touch)
-│   ├── Click/tap to select
-│   ├── Right-click/long-press for context menu
-│   ├── Drag for multiple selection
-│   ├── Double-click/tap for editing
-│   └── Hover for tooltips (non-touch platforms)
-├── Touch Gestures (iOS, Android)
-│   ├── Tap to select
-│   ├── Long-press for context menu
-│   ├── Pinch to zoom
-│   ├── Two-finger pan to scroll
-│   └── Swipe for navigation
-├── Stylus/Pencil (iPad, Surface, Linux tablets)
-│   ├── Direct note placement
-│   ├── Gesture recognition for ornaments
-│   ├── Pressure sensitivity (future enhancement)
-│   └── Palm rejection
-└── Voice Input (Accessibility)
-    ├── Note dictation
-    └── Command execution
-```
 
-### 1.3 Context-Aware Actions
 
-**Actions adapt to:**
-- Currently selected element type
-- Available platform capabilities
-- User's skill level (beginner vs. expert modes)
-- Platform input methods (keyboard vs. touch)
-
----
-
-## 2. Note Entry Workflow
-
-### 2.1 Continuous Entry Pattern (No Modes)
-
-**Core Principle: Selection-Is-Replaced-On-Entry**
-
-The application operates with a single unified interaction model where note entry can occur at any time, regardless of selection state:
-
-```
-Continuous Entry Model:
-├── Default State
-│   └── No selection → Cursor position determines insertion point
-├── Selected Note(s)
-│   └── Entry action → Replaces selection with new note
-├── Selected Measure(s)
-│   └── Entry action → Replaces first note position with new note
-├── Selected System(s)
-│   └── Entry action → Replaces first measure first position with new note
-└── Any Entry Method Works Immediately
-    ├── Keyboard shortcuts (A-G for pitches, 1-8 for durations)
-    ├── Click/tap on staff
-    ├── MIDI input (if available)
-    └── Voice input (accessibility)
-```
-
-### 2.2 Note Entry Actions
-
-**Action Trigger Methods:**
-
-All note entry actions work identically whether or not elements are selected.
-
-#### 2.2.1 Insert Note Action
-
-**Trigger Options (Platform Implements Native Method):**
-- **Keyboard**: Press note letter key (A-G)
-- **Click/Tap**: Click on staff line/space
-- **Context Menu**: Right-click > Insert Note > [pitch]
-- **Button**: Toolbar button > click pitch on staff
-- **Voice**: "Insert D quarter note" (accessibility)
-
-**Required Parameters:**
-- Pitch (determined by staff position or key press)
-- Duration (from current tool setting or modifier key)
-- Instrument (from current staff context)
-
-**Behavior:**
-```
-If no selection:
-└── Insert note at cursor position
-
-If note(s) selected:
-└── Replace selection with new note
-
-If measure(s) selected:
-└── Replace first note position in first measure
-
-If system(s) selected:
-└── Replace first note position in first measure of first staff
-```
-
-**Platform Implementations:**
-- **iOS/macOS**: Keyboard shortcut, toolbar buttons, tap on staff, Apple Pencil stroke
-- **Android**: Floating action button, tap on staff, hardware keyboard (if present)
-- **Windows**: Keyboard shortcut, ribbon button, click on staff, Surface Pen
-- **Linux**: Keyboard shortcut, toolbar button, click on staff, stylus (if present)
-
-#### 2.2.2 Set Note Duration Action
-
-**Conceptual Triggers:**
-- **Before Entry**: Select duration tool, then enter notes
-- **After Entry**: Select note(s), then change duration
-- **During Entry**: Keyboard numbers (1=whole, 2=half, 4=quarter, 8=eighth)
-
-**Platform Implementations:**
-- **iOS/macOS**: Toolbar duration picker, keyboard numbers (1-8), duration palette
-- **Android**: Bottom sheet duration selector, keyboard numbers, FAB menu
-- **Windows**: Ribbon duration group, keyboard numbers, context menu
-- **Linux**: Toolbar duration buttons, keyboard numbers, dropdown menu
-
-#### 2.2.3 Select Instrument for Entry
-
-**Conceptual Triggers:**
-- **Staff Selection**: Click on staff selects that instrument context
-- **Explicit Selection**: Instrument picker/dropdown
-- **Keyboard**: Cycle through instruments with modifier key
-
-**Platform Implementations:**
-- **iOS/macOS**: Tap staff, instrument picker in toolbar, ⌘[1-4] shortcuts
-- **Android**: Tap staff, drawer menu for instruments, hardware keys
-- **Windows**: Click staff, ribbon instrument selector, Ctrl+[1-4]
-- **Linux**: Click staff, toolbar dropdown, Ctrl+[1-4]
-
-### 2.3 Cursor and Insertion Point Management
-
-**Cursor Behavior:**
-
-```
-Cursor State Management:
-├── After Deletion
-│   └── Cursor moves to position of deleted element
-├── After Insertion
-│   └── Cursor advances to next note position (right of inserted note)
-├── After Arrow Key Navigation
-│   └── Cursor moves to adjacent element
-├── After Click/Tap
-│   └── Cursor moves to clicked position
-└── Visual Feedback
-    ├── Blinking cursor line at insertion point
-    ├── Cursor shown between notes (not on notes)
-    └── Cursor respects staff line quantization
-```
-
-**Insertion Point Rules:**
-
-```
-Insertion Point Determination:
-├── No Selection + No Cursor
-│   └── Insert at beginning of first measure
-├── No Selection + Cursor Present
-│   └── Insert at cursor position
-├── Note Selected
-│   └── Replace selected note(s)
-├── Measure Selected
-│   └── Replace first note position in measure
-└── System Selected
-    └── Replace first note position in first measure
-```
-
-### 2.4 Rapid Entry Workflow (Expert Users)
-
-**Keyboard-Driven Entry Pattern:**
-
-For experienced users, enable rapid keyboard-only note entry:
-
-```
-Keyboard Entry Workflow:
-├── Press note letter (A-G) → inserts note at cursor, advances cursor
-├── Press duration number (1, 2, 4, 8) → changes next note duration
-├── Press Up/Down arrow → transposes last inserted note
-├── Press Space/Enter → advances to next beat position
-├── Press modifier + letter → adds accidental (sharp/flat)
-├── Press Backspace/Delete → removes last note, moves cursor back
-└── Selection shortcuts work immediately (⌘⇧D for doubling, etc.)
-```
-
-**Platform-Specific Shortcuts Defined in Platform Specs:**
-- Each platform defines its own modifier keys (⌘, Ctrl, Alt, etc.)
-- Follows platform conventions (e.g., macOS uses ⌘, Windows uses Ctrl)
-- Documented in platform implementation specifications
-
-### 2.5 Touch/Stylus Direct Manipulation
-
-**Touch/Pencil Entry Pattern:**
-
-For touch and stylus-enabled platforms:
-
-```
-Direct Entry Workflow:
-├── Tap note duration tool in palette
-├── Tap on staff line/space → inserts note at that pitch
-├── Drag vertically on note → changes pitch
-├── Drag horizontally on note → changes timing position
-├── Pinch note → changes duration
-├── Long-press note → opens context menu
-└── Two-finger tap → undo last action
-```
-
-**Stylus-Specific Enhancements (iPad, Surface, Linux tablets):**
-- Handwriting recognition for note letters (future enhancement)
-- Gesture recognition for common embellishments
-- Pressure sensitivity for velocity/dynamics (future enhancement)
-
-### 2.6 Error Prevention and Validation
-
-**Real-Time Validation During Entry:**
-
-```
-Entry Validation:
-├── Duration Validation
-│   ├── Check if note fits in remaining measure duration
-│   ├── Show red outline if would overflow
-│   ├── Offer to split note or add measure
-│   └── Block insertion until resolved or user confirms
-├── Pitch Validation
-│   ├── Check if pitch is in instrument range
-│   ├── Warn if unusual pitch (rare but allowed)
-│   └── Transpose suggestion if out of range
-└── Context Validation
-    ├── Ensure note type matches instrument
-    ├── Validate against current time signature
-    └── Check for musical logic errors
-```
-
-### 2.7 Undo/Redo Integration
-
-**Undo Granularity for Note Entry:**
-
-```
-Undo Point Creation:
-├── After Each Note Insertion
-│   └── Undo removes last inserted note, restores cursor
-├── After Duration Change
-│   └── Undo reverts duration, keeps note
-├── After Pitch Change
-│   └── Undo reverts pitch, keeps note
-├── After Selection Replacement
-│   └── Undo restores original selection
-└── Batch Operations
-    └── Multiple rapid entries can be grouped (< 2 seconds apart)
-```
-
----
-
-## 3. Selection Patterns
-
-### 3.1 Selection Scope
-
-**Selectable Element Types:**
-
-```
-Selectable Elements (Hierarchical):
-├── Individual Notes
-├── Rests
-├── Embellishments (grace notes)
-├── Measures (selects all content)
-├── Systems (selects all instruments' measures)
-├── Parts (selects all systems in part)
-├── Tunes (selects all parts)
-└── Full Score (selects everything)
-```
-
-### 3.2 Selection Methods
-
-**Single Selection:**
-- **Click/Tap**: Single element selection
-- **Visual Feedback**: Selected element highlighted with selection color
-- **Deselection**: Click/tap on empty space or press Escape
-
-**Multiple Selection:**
-- **Shift+Click**: Extend selection (range selection for sequential elements)
-- **Modifier+Click**: Add/remove individual elements (⌘/Ctrl+Click)
-- **Drag Rectangle**: Select all elements within dragged area
-- **Select All**: Keyboard shortcut (⌘A/Ctrl+A) or menu command
-
-**Hierarchical Selection:**
-- **Click Measure**: Selects entire measure (all notes, rests)
-- **Click System**: Selects entire system (all instruments, all measures)
-- **Click Part Header**: Selects entire part (all systems)
-- **Context Determines Scope**: Single click on measure bar selects measure
-
-### 3.3 Selection Feedback
-
-**Visual Indication Requirements:**
-
-```
-Selection States:
-├── Selected (Primary)
-│   ├── Highlight color (platform theme-aware)
-│   ├── Selection handles (for drag/resize)
-│   └── Bounding box (for groups)
-├── Hover/Focus (Non-Touch)
-│   ├── Subtle highlight or outline
-│   └── Cursor change (pointer, hand)
-├── Multi-Selection
-│   ├── All selected elements highlighted
-│   └── Selection count indicator
-└── Disabled (Cannot Select)
-    └── Dimmed appearance, no interaction
-```
-
-**Accessibility Requirements:**
-- Screen reader announces selection changes
-- Selection visible in high contrast modes
-- Keyboard-only navigation supports all selection methods
-- Focus indicator separate from selection indicator
-
----
-
-## 4. Context-Aware Keyboard Shortcuts
-
-### 4.1 Context-Aware Shortcut Philosophy
-
-**Principle: Shortcuts Adapt to Selection**
-
-Rather than having fixed shortcuts for all actions, shortcuts become available based on what's currently selected:
-
-```
-Context-Aware Shortcut Model:
-├── Note Selected
-│   ├── Embellishment shortcuts active
-│   ├── Duration shortcuts active
-│   ├── Pitch shortcuts active
-│   └── Articulation shortcuts active
-├── Measure Selected
-│   ├── Time signature shortcuts active
-│   ├── Barline shortcuts active
-│   ├── Volta/ending shortcuts active
-│   └── System break shortcuts active
-├── System Selected
-│   ├── Staff spacing shortcuts active
-│   ├── System break shortcuts active
-│   └── Instrument visibility shortcuts active
-├── Part Selected
-│   ├── Part reordering shortcuts active
-│   ├── Repeat count shortcuts active
-│   └── Part properties shortcuts active
-└── No Selection
-    ├── Navigation shortcuts active
-    ├── File operations active
-    └── View operations active
-```
-
-### 4.2 Note Context Shortcuts (When Note Selected)
-
-**Embellishment Application:**
-- Modifier+Shift+Letter combinations for embellishments
-- Examples (platform defines actual modifiers):
-  - D: Doubling
-  - L: Grip (Leamluath)
-  - T: Taorluath
-  - F: Flam (drums)
-  - R: Rough (drums)
-
-**Duration Changes:**
-- Number keys (1, 2, 4, 8, 16, 32) change selected note duration
-- Dot key adds/removes duration dot
-
-**Pitch Changes:**
-- Up/Down arrows transpose selected note
-- Accidental keys add sharp/flat/natural
-
-### 4.3 Measure Context Shortcuts (When Measure Selected)
-
-**Barline and Volta Operations:**
-- Modifier+Shift+Number for ending brackets
-- Examples:
-  - 1: First ending
-  - 2: Second ending
-  - V: Generic volta
-
-**Time Signature:**
-- Modifier+T: Open time signature dialog
-- Quick shortcuts for common signatures (4/4, 3/4, 6/8)
-
-**System Breaks:**
-- Modifier+Return: Insert system break after measure
-
-### 4.4 System Context Shortcuts (When System Selected)
-
-**Layout Operations:**
-- Modifier+Return: Insert system break
-- Modifier+Shift+S: Adjust staff spacing
-- Modifier+Shift+I: Toggle instrument visibility
-
-### 4.5 Universal Shortcuts (Work in Any Context)
-
-**File Operations:**
-- Modifier+N: New score
-- Modifier+O: Open score
-- Modifier+S: Save score
-- Modifier+P: Print/Export
-
-**Edit Operations:**
-- Modifier+Z: Undo
-- Modifier+Shift+Z or Modifier+Y: Redo
-- Modifier+X: Cut
-- Modifier+C: Copy
-- Modifier+V: Paste (replaces selection)
-- Delete/Backspace: Delete selected element(s)
-
-**View Operations:**
-- Modifier+Plus: Zoom in
-- Modifier+Minus: Zoom out
-- Modifier+0: Actual size
-- Modifier+9: Fit to width
-
-**Navigation:**
-- Arrow keys: Navigate between elements
-- Page Up/Down: Navigate between systems
-- Home/End: Jump to start/end
-- Modifier+F: Find/Search
-
-### 4.6 Shortcut Discoverability
-
-**Teaching Users the Context-Aware Shortcuts:**
-
-```
-Shortcut Discoverability Features:
-├── Context Menu Integration
-│   └── Show keyboard shortcut next to every menu item
-│       Examples: 
-│       - "Doubling        ⌘⇧D" (note context)
-│       - "1st Ending      ⌘⇧1" (measure context)
-│       - "System Break    ⌘Return" (system context)
-│
-├── Toolbar Tooltips
-│   └── Hover over button shows:
-│       - Action name
-│       - Keyboard shortcut
-│       - Required selection type
-│       Example: "Doubling (⌘⇧D) - Requires note selection"
-│
-├── Help Overlay (Press ? or F1)
-│   ├── Searchable list of ALL shortcuts
-│   ├── Organized by selection context:
-│   │   ├── "Note Actions"
-│   │   ├── "Measure Actions"
-│   │   ├── "System Actions"
-│   │   ├── "Part Actions"
-│   │   └── "Global Actions"
-│   ├── Visual keyboard diagram with shortcuts highlighted
-│   ├── Filter by selection type currently active
-│   └── Press Escape to dismiss
-│
-├── Inspector Panel
-│   └── Each property section shows shortcut hints
-│       Examples:
-│       - "Embellishment: Doubling (⌘⇧D)"
-│       - "Volta: 1st Ending (⌘⇧1)"
-│       - "System Break (⌘Return)"
-│
-├── Status Bar Context Hints
-│   └── Shows available shortcuts for current selection
-│       Examples:
-│       - "Note selected: ⌘⇧D-Doubling, ⌘⇧L-Grip, ⌘⇧T-Taorluath"
-│       - "Measure selected: ⌘⇧1-1st End, ⌘⇧2-2nd End, ⌘⇧V-Volta"
-│
-└── First-Time Tutorial
-    ├── Introduce context-aware shortcuts during onboarding
-    ├── Interactive tutorial: "Select a note, then press ⌘⇧D"
-    ├── Show context menu with shortcuts highlighted
-    └── Optional: Show shortcut hints on first few uses
-```
-
----
-
-## 5. Embellishment Attachment Workflow
-
-### 5.1 Embellishment Workflow Pattern
-
-**Context-Aware Embellishment Actions:**
-
-```
-Embellishment Attachment Workflow:
-├── Step 1: Select Note(s)
-│   ├── Click/tap on principal note
-│   └── Multiple notes for batch embellishment
-├── Step 2: Choose Embellishment
-│   ├── Context menu → Embellishments submenu
-│   ├── Keyboard shortcut (⌘⇧Letter) when note selected
-│   ├── Toolbar button → Embellishment palette
-│   └── Inspector panel embellishment picker
-└── Step 3: Confirm & Apply
-    ├── Embellishment attached to note
-    ├── Visual feedback (grace notes rendered)
-    ├── Validation warnings (if prior note incompatible)
-    └── Undo point created
-```
-
-### 5.2 Embellishment Selection Methods
-
-**Platform-Agnostic Action Triggers:**
-
-#### 5.2.1 Keyboard Shortcut Approach (Primary for Experts)
-
-**Workflow:**
-1. Select principal note(s)
-2. Press context-aware embellishment shortcut
-3. Embellishment applied immediately
-
-**Example Shortcuts (Platform Adapts Modifiers):**
-- **Note selected** + Modifier+Shift+D → Doubling
-- **Note selected** + Modifier+Shift+T → Taorluath
-- **Note selected** + Modifier+Shift+L → Grip (Leamluath)
-- **Note selected** + Modifier+Shift+F → Flam (drums)
-- **Note selected** + Modifier+Shift+R → Rough (drums)
-
-#### 5.2.2 Context Menu Approach (Secondary)
-
-**Workflow:**
-1. Select principal note(s)
-2. Right-click / Long-press / Two-finger tap
-3. Context menu appears with "Add Embellishment" option
-4. Submenu shows categorized embellishments:
-   - Pipe Band Embellishments (Doubling, Throw, Grip, etc.)
-   - Drum Embellishments (Flam, Drag, Rough, etc.)
-5. Click embellishment name to apply (shortcut shown in menu)
-6. Embellishment appears on note immediately
-
-**Platform Implementations:**
-- **iOS/macOS**: Long-press or Control+Click → Context menu
-- **Android**: Long-press → Bottom sheet or popup menu
-- **Windows**: Right-click → Context menu (Fluent Design)
-- **Linux**: Right-click → Context menu (desktop environment style)
-
-#### 5.2.3 Toolbar/Palette Approach (Tertiary)
-
-**Workflow:**
-1. Select principal note(s)
-2. Click embellishment palette button in toolbar
-3. Palette appears showing embellishment options with icons/names
-4. Click embellishment to apply to selection
-5. Palette remains open for applying to additional notes
-
-**Platform Implementations:**
-- **iOS/macOS**: Toolbar button → Popover palette
-- **Android**: FAB → Expanding menu or full-screen picker
-- **Windows**: Ribbon tab → Embellishment gallery
-- **Linux**: Toolbar button → Dropdown palette
-
-#### 5.2.4 Inspector Panel Approach (Quaternary)
-
-**Workflow:**
-1. Select principal note(s)
-2. Inspector panel shows note properties
-3. Embellishment section shows "None" or current embellishment
-4. Click embellishment picker
-5. Choose from categorized list
-6. Applied immediately to selection
-
-**Platform Implementations:**
-- **iOS/macOS**: Right sidebar inspector, iPad bottom sheet inspector
-- **Android**: Right drawer or bottom sheet
-- **Windows**: Right pane inspector (Task Pane)
-- **Linux**: Right sidebar or floating palette
-
-### 5.3 Changing Embellishments
-
-**Modification Pattern:**
-
-```
-Change Existing Embellishment:
-├── Select note with embellishment
-├── Inspector shows current embellishment type
-├── Methods to change:
-│   ├── Keyboard shortcut → New embellishment (replaces current)
-│   ├── Context menu → Change Embellishment → [new type]
-│   ├── Inspector → Embellishment picker → [new type]
-│   └── Delete embellishment (Delete key) → Add new one
-└── Validation checks prior note constraints
-```
-
-**Remove Embellishment:**
-- Select note with embellishment
-- Press Delete/Backspace (if note selected, removes embellishment only)
-- OR Context menu → Remove Embellishment
-- OR Inspector → Embellishment picker → None
-
-### 5.4 Batch Embellishment Operations
-
-**Apply to Multiple Notes:**
-
-```
-Batch Embellishment Workflow:
-├── Select multiple principal notes (Shift+Click or drag select)
-├── Choose embellishment via any method
-├── Application rules:
-│   ├── Validate each note individually
-│   ├── Skip incompatible notes (show warning)
-│   ├── Apply to all compatible notes
-│   └── Show summary: "Applied to 5 of 7 notes, 2 skipped"
-└── Single undo operation for entire batch
-```
-
----
-
-## 6. Musical Editing Actions
-
-### 6.1 Note Editing Actions
-
-**Common Note Operations:**
-
-#### 6.1.1 Delete Note(s)
-
-**Triggers:**
-- Select note(s) → Press Delete/Backspace
-- Select note(s) → Context menu → Delete
-- Select note(s) → Edit menu → Delete
-
-**Behavior:**
-- Removes note(s) from measure
-- Adjusts measure duration (may add rest)
-- Cursor moves to deletion position
-- Undo point created
-
-#### 6.1.2 Change Note Pitch
-
-**Triggers:**
-- Select note → Up/Down arrow keys (transpose)
-- Select note → Drag vertically (touch/mouse)
-- Select note → Inspector → Pitch picker
-
-**Behavior:**
-- Updates pitch within instrument range
-- Validates pitch compatibility
-- Visual update immediate
-- Cursor stays at note
-
-#### 6.1.3 Change Note Duration
-
-**Triggers:**
-- Select note(s) → Press duration number key (1, 2, 4, 8)
-- Select note(s) → Toolbar duration picker
-- Select note(s) → Inspector → Duration picker
-- Select note(s) → Context menu → Duration → [value]
-
-**Behavior:**
-- Updates note duration
-- Validates measure duration doesn't overflow
-- Adjusts subsequent note positions if needed
-- Cursor stays at note
-
-#### 6.1.4 Add Accidental
-
-**Triggers:**
-- Select note → Keyboard shortcut (platform-specific: # for sharp, b for flat)
-- Select note → Context menu → Add Accidental → [Sharp/Flat/Natural]
-- Select note → Inspector → Accidental picker
-- Select note → Toolbar accidental buttons
-
-**Behavior:**
-- Adds accidental to note (sharp, flat, natural)
-- Updates pitch accordingly
-- Renders accidental symbol before note
-- Cursor stays at note
-
-#### 6.1.5 Add Articulation
-
-**Triggers:**
-- Select note(s) → Context menu → Articulation → [type]
-- Select note(s) → Inspector → Articulation checkboxes
-- Select note(s) → Keyboard shortcut (platform-specific)
-- Select note(s) → Toolbar articulation palette
-
-**Articulation Types:**
-- Staccato (dot above/below note)
-- Accent (> symbol)
-- Tenuto (line above/below note)
-- Fermata (hold)
-- Dynamic markings (integrated with NoteGroup system)
-
-### 6.2 Measure Operations
-
-**Measure-Level Actions:**
-
-#### 6.2.1 Insert Measure
-
-**Triggers:**
-- Click between measures → Insert button
-- Select measure → Context menu → Insert Before/After
-- Keyboard shortcut (platform-specific)
-- Menu → Insert → Measure
-
-**Behavior:**
-- Inserts empty measure (with rests)
-- Inherits time signature from previous measure
-- Shifts subsequent measures
-- Cursor moves to new measure
-
-#### 6.2.2 Delete Measure
-
-**Triggers:**
-- Select measure → Delete/Backspace
-- Select measure → Context menu → Delete Measure
-- Menu → Edit → Delete Measure
-
-**Behavior:**
-- Removes entire measure (all instruments)
-- Shifts subsequent measures left
-- Confirmation dialog if measure contains notes
-- Cursor moves to deletion position
-
-#### 6.2.3 Change Time Signature
-
-**Triggers:**
-- Select measure → Context menu → Time Signature
-- Select measure → Inspector → Time Signature picker
-- Select measure → Keyboard shortcut (⌘T / Ctrl+T)
-- Double-click time signature → Edit dialog
-
-**Options:**
-- Apply to this measure only
-- Apply to this measure and all subsequent (cascade)
-- Apply to entire tune
-
-**Behavior:**
-- Updates time signature
-- Validates note durations still fit
-- May prompt to adjust existing content
-- Cursor stays at measure
-
-#### 6.2.4 Set Barline Type
-
-**Triggers:**
-- Select measure → Context menu → Barline → [type]
-- Select measure → Inspector → Opening/Closing Barline picker
-- Click barline directly → Picker appears
-
-**Behavior:**
-- Changes opening or closing barline type
-- Updates visual rendering
-- Handles repeat barlines with dots
-- Cursor stays at measure
-
-#### 6.2.5 Add Ending Brackets (Volta)
-
-**Triggers:**
-- Select measure → Keyboard shortcut (⌘⇧1 for 1st ending, ⌘⇧2 for 2nd)
-- Select measure → Context menu → Add Ending → [1st/2nd/etc.]
-- Select measure → Inspector → Volta picker
-
-**Behavior:**
-- Adds ending bracket above measure
-- Configures ending number and repeat behavior
-- Visual bracket rendered
-- Cursor stays at measure
-
-### 6.3 Part and Tune Operations
-
-**Higher-Level Actions:**
-
-#### 6.3.1 Add Part
-
-**Triggers:**
-- Toolbar → Add Part button
-- Menu → Insert → Part
-- Context menu on part list → Add Part
-
-**Behavior:**
-- Inserts new part (A, B, C, etc.)
-- Prompts for part letter/name
-- Inherits instruments from tune
-- Creates empty measures with default time signature
-
-#### 6.3.2 Reorder Parts
-
-**Triggers:**
-- Drag part header in part list (touch/mouse)
-- Part list context menu → Move Up/Down
-- Inspector → Part order spinner
-
-**Behavior:**
-- Changes play order
-- Updates navigation
-- Affects pagination
-
-#### 6.3.3 Add Tune
-
-**Triggers:**
-- Document menu → Add Tune
-- Toolbar → New Tune button
-- Context menu in tune list → Add Tune
-
-**Behavior:**
-- Creates new tune in score
-- Prompts for title, type, tempo
-- Creates default A part
-- Updates pagination
-
----
-
-## 7. Copy/Paste Operations
-
-### 7.1 Copy/Paste Scope
-
-**Copyable Elements:**
-
-```
-Copy/Paste Support:
-├── Individual Notes
-│   ├── Copies pitch, duration, embellishment
-│   ├── Pastes at cursor or replaces selection
-│   └── Validates compatibility with target
-├── Measures
-│   ├── Copies entire measure content (all instruments)
-│   ├── Copies time signature and barlines
-│   └── Pastes as new measure or replaces selection
-├── Systems
-│   ├── Copies all measures in system
-│   ├── All instruments included
-│   └── Pastes as new systems
-└── Parts
-    ├── Copies entire part structure
-    ├── All systems and instruments
-    └── Pastes as new part
-```
-
-### 7.2 Copy/Paste Behavior
-
-**Paste Logic:**
-
-```
-Paste Behavior:
-├── Paste at Cursor
-│   ├── Inserts copied content at current position
-│   ├── Shifts subsequent content right
-│   └── Validates measure duration doesn't overflow
-├── Paste Replace (Selection Present)
-│   ├── Replaces selected content with copied content
-│   ├── Maintains measure boundaries
-│   └── Asks for confirmation if replacing non-empty
-└──
