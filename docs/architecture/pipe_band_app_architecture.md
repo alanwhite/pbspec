@@ -11,6 +11,7 @@
 This document defines the **platform-agnostic architectural foundation** for a Scottish pipe band music notation application. It specifies the domain model, business logic, and architectural patterns that must be consistently implemented across all platform-specific implementations (iOS, macOS, Android, Windows, Linux).
 
 **What This Document Contains:**
+
 - Clean Architecture layer definitions
 - Domain entities and business rules
 - Musical notation specifications (SMuFL compliance)
@@ -20,6 +21,7 @@ This document defines the **platform-agnostic architectural foundation** for a S
 - Cross-platform architectural patterns
 
 **What This Document Does NOT Contain:**
+
 - Platform-specific implementation details (Swift, Kotlin, C#, etc.)
 - UI framework specifications (SwiftUI, Compose, WinUI, Qt)
 - Platform-specific storage implementations
@@ -27,6 +29,7 @@ This document defines the **platform-agnostic architectural foundation** for a S
 - Platform-specific audio processing details
 
 **Related Documents:**
+
 - `ux_interaction_design.md` - UX specification for interacting with scores
 - `ios_macos_implementation.md` - iOS/macOS implementation with App Store compliance
 - `android_implementation.md` - Android implementation with Play Store guidelines
@@ -40,6 +43,7 @@ This document defines the **platform-agnostic architectural foundation** for a S
 This specification outlines a cross-platform application for Scottish pipe band musicians, built using **platform-native languages** and **Clean Architecture** principles. The app targets bagpipes, bass drums, tenor drums, and snare drums with offline-first functionality and SMuFL-compliant music notation rendering across macOS, iOS, Android, Windows, and Linux platforms.
 
 ### 1.1 Target Instruments
+
 - **Bagpipes:** Great Highland Bagpipe with traditional embellishments
 - **Bass Drum:** Single unpitched percussion with hand notation
 - **Tenor Drum:** Multi-drum pitched percussion (4-6 drums typical)
@@ -48,23 +52,27 @@ This specification outlines a cross-platform application for Scottish pipe band 
 ### 1.2 Core Design Principles
 
 **Offline-First Architecture:**
+
 - Complete functionality without network connectivity
 - Local-first data storage with optional cloud synchronization
 - Graceful degradation when cloud services unavailable
 
 **Cultural Authenticity:**
+
 - Authentic Scottish pipe band notation standards
 - Traditional Gaelic terminology preservation
 - Regional style variations (Highland, Border, competition vs. traditional)
 - Educational support for non-native practitioners
 
 **Professional Quality:**
+
 - SMuFL-compliant music notation rendering
 - Publication-quality score output
 - Professional audio processing capabilities
 - Competition-ready score preparation
 
 **Universal Accessibility:**
+
 - Cross-platform file format compatibility
 - Multi-language support with cultural sensitivity
 - Accessibility compliance for screen readers and assistive technologies
@@ -119,18 +127,21 @@ The application follows Clean Architecture principles with clear separation of c
 ### 2.2 Layer Responsibilities
 
 **Presentation Layer (Platform-Specific):**
+
 - Renders musical notation using platform graphics APIs
 - Handles user input and gesture recognition
 - Implements platform-specific UI patterns and conventions
 - Manages view lifecycle and navigation
 
 **Application Layer (Platform-Specific with Domain Integration):**
+
 - Orchestrates use case execution
 - Coordinates between domain logic and presentation
 - Manages application state and workflows
 - Handles cross-cutting concerns (logging, analytics)
 
 **Domain Layer (Platform-Agnostic - Specified in This Document):**
+
 - Defines core business entities and rules
 - Implements musical validation logic
 - Specifies repository contracts
@@ -146,6 +157,7 @@ The application follows Clean Architecture principles with clear separation of c
 ### 2.3 Dependency Rule
 
 **Critical Architectural Constraint:**
+
 - Dependencies point **inward only**
 - Domain layer has **zero dependencies** on outer layers
 - Domain layer knows nothing about UI frameworks, databases, or platforms
@@ -172,6 +184,7 @@ Instrument (Abstract Base)
 ```
 
 **Core Instrument Properties:**
+
 - `id`: Unique identifier (UUID/GUID)
 - `instrumentType`: Enumeration (Bagpipes, BassDrum, TenorDrum, SnareDrum)
 - `availableTunings`: List of supported tuning systems
@@ -203,6 +216,7 @@ InstrumentCapabilities
 ```
 
 **Default Clef Assignments:**
+
 - Bagpipes: Treble Clef
 - Bass Drum: Bass Clef
 - Tenor Drum: Bass Clef
@@ -211,6 +225,7 @@ InstrumentCapabilities
 #### 3.1.2 Score Document Structure
 
 **Primary Entity: ScoreDocument**
+
 ```
 ScoreDocument
 ├── Metadata
@@ -343,6 +358,7 @@ InstrumentMeasure
 **Time Signature Cascading Logic:**
 
 Time signatures cascade backward through the musical structure:
+
 1. Check current measure's explicit time signature
 2. If null, search backward through previous measures in same system
 3. If none found in system, search previous systems in same part
@@ -469,6 +485,7 @@ Clef
 ```
 
 **Clef Rendering Rules:**
+
 - Display clef at: first measure of system, clef change, after system break
 - Default clefs: Bagpipes (Treble), Bass/Tenor Drums (Bass), Snare (Unpitched)
 - Alternative clefs available per instrument type
@@ -491,6 +508,7 @@ KeySignature
 ```
 
 **Bagpipe Key Signature Convention:**
+
 - Traditional bagpipe music uses 2 sharps (F# and C#) for D Major
 - Display at start of each system for clarity
 - Modern notation may use concert pitch key signatures
@@ -537,6 +555,7 @@ TimeSignature
 ```
 
 **Common Pipe Band Time Signatures:**
+
 - 2/4 (March, Polka)
 - 3/4 (Slow Air, Waltz)
 - 4/4 (March, Strathspey)
@@ -1206,6 +1225,7 @@ TupletGroup : NoteGroup
 ```
 
 **Common Pipe Band Tuplets:**
+
 - Triplets (3:2) - Three notes in the time of two
 - Duplets (2:3) - Two notes in the time of three (in compound time)
 
@@ -2109,6 +2129,7 @@ DomainErrorOccurredEvent:
 ### 4.2 Cross-Platform Compatibility Standards
 
 **Universal File Handling Requirements:**
+
 - Identical JSON structure read/written by all platforms
 - Platform file associations for .pbscore files
 - Email/cloud sharing compatibility across all platforms
@@ -2116,6 +2137,7 @@ DomainErrorOccurredEvent:
 - Standard UTF-8 encoding for international character support
 
 **Excluded Information:**
+
 - Platform identifiers or application version metadata
 - Platform-specific layout preferences or rendering hints
 - Compatibility matrices or feature support flags
@@ -2123,6 +2145,7 @@ DomainErrorOccurredEvent:
 - Cloud provider specific metadata or synchronization data
 
 **Validation Requirements:**
+
 - JSON schema validation before reading/writing
 - Version compatibility checking (format version)
 - Graceful handling of future format extensions
@@ -2134,6 +2157,7 @@ DomainErrorOccurredEvent:
 #### 4.3.1 PDF Export Requirements
 
 **Quality Standards:**
+
 - Vector-based output (scalable graphics)
 - SMuFL font embedding (complete subset)
 - Minimum 300 DPI for professional printing
@@ -2141,6 +2165,7 @@ DomainErrorOccurredEvent:
 - Metadata embedding (title, composer, copyright)
 
 **Layout Preservation:**
+
 - Exact visual fidelity to screen rendering
 - Correct page dimensions and margins
 - Proper color reproduction (RGB or CMYK)
@@ -2149,18 +2174,21 @@ DomainErrorOccurredEvent:
 #### 4.3.2 MusicXML Export Requirements
 
 **Standard Compliance:**
+
 - MusicXML 4.0 specification adherence
 - Complete musical content preservation
 - Layout hints where applicable
 - Metadata transfer (title, composer, etc.)
 
 **Embellishment Translation:**
+
 - Grace note representation for all embellishments
 - Annotation for pipe band specific ornaments
 - Best-effort mapping to standard MusicXML elements
 - Notes in comments for non-standard elements
 
 **Limitations:**
+
 - Some pipe band specific embellishments may require simplification
 - Drum hand assignments may not transfer to all applications
 - Layout preferences may not be preserved exactly
@@ -2169,29 +2197,34 @@ DomainErrorOccurredEvent:
 #### 4.3.3 MIDI Export Requirements
 
 **Basic Playback Support:**
+
 - MIDI file format 1 (multi-track)
 - Tempo preservation with changes
 - Instrument mapping (General MIDI)
 - Multi-track support (separate tracks per instrument)
 
 **Embellishment Interpretation:**
+
 - Grace notes converted to MIDI sequences
 - Timing approximations for ornaments
 - Duration adjustments applied to playback
 - Dynamics translated to velocity changes
 
 **Hand Assignment Translation:**
+
 - Drum hand assignments converted to velocity patterns
 - Left hand = slightly lower velocity (optional)
 - Right hand = slightly higher velocity (optional)
 - Alternating hand patterns preserved in timing
 
 **Note Type Duration:**
+
 - Accurate MIDI timing based on note types
 - Duration adjustments applied for playback feel
 - Tempo changes reflected in MIDI events
 
 **Limitations:**
+
 - Audio quality limited by MIDI synthesis
 - Nuanced bagpipe ornamentation difficult to express
 - Drum techniques simplified to basic MIDI
@@ -2296,6 +2329,7 @@ Rests:
 ### 5.3 Pipe Band Specific Rendering
 
 **Grace Note Rendering:**
+
 - Smaller note head size (typically 60-70% of principal note)
 - Slashed stem (diagonal line through stem)
 - Proper spacing before principal note
@@ -2303,6 +2337,7 @@ Rests:
 - Consistent vertical alignment
 
 **Embellishment Layout Rules:**
+
 - Grace notes positioned above staff
 - Minimum clearance from staff lines
 - Collision avoidance with other elements
@@ -2310,6 +2345,7 @@ Rests:
 - Floating before barline for first note embellishments
 
 **Staff and System Layout:**
+
 - Standard 5-line staff for pitched instruments
 - Single-line percussion staff for snare drum
 - Proper staff spacing for multi-instrument systems
@@ -2319,11 +2355,13 @@ Rests:
 ### 5.4 Font Metrics and Spacing
 
 **Staff Height:**
+
 - Staff height: 4 spaces (standard music notation)
 - Space unit: Base measurement for all spacing
 - Scaling factor applied consistently to all elements
 
 **Symbol Sizing:**
+
 - Note heads: 1.0 space units
 - Grace note heads: 0.6-0.7 space units
 - Accidentals: 1.5 space units height
@@ -2337,6 +2375,7 @@ Rests:
 - System start spacing: 2.0 space units
 
 **Vertical Spacing:**
+
 - System separation: 8-12 space units
 - Staff separation (multi-instrument): 6-8 space units
 - Grace note elevation: 2-3 space units above staff
@@ -2348,6 +2387,7 @@ Rests:
 ### 6.1 Language Support
 
 **Target Languages (Priority Order):**
+
 1. English (UK) - British spellings, metric system
 2. English (US) - American spellings, imperial/metric mixed
 3. French (FR) - European French, metric system
@@ -2355,6 +2395,7 @@ Rests:
 5. German (DE) - Standard German, metric system
 
 **Localization Framework Requirements:**
+
 - Platform-native localization systems
 - String externalization (no hardcoded text)
 - Cultural adaptation (date formats, number formats)
@@ -2364,18 +2405,21 @@ Rests:
 ### 6.2 Musical Terminology Management
 
 **Standardized Term Database:**
+
 - Tune Types: March, Strathspey, Reel, Jig, Hornpipe, etc.
 - Instruments: Bagpipes, Snare Drum, Tenor Drum, Bass Drum
 - Technical Terms: Pipe band specific terminology
 - Ornament Names: Balance between translation and Gaelic preservation
 
 **Cultural Sensitivity:**
+
 - Preserve Scottish Gaelic terms where appropriate
 - Provide explanations for non-native speakers
 - Respect regional variations in terminology
 - Support for different literacy levels
 
 **Translation Guidelines:**
+
 - Technical accuracy prioritized over literal translation
 - Musical terms may remain in original language
 - Gaelic embellishment names preserved with translations
@@ -2384,17 +2428,20 @@ Rests:
 ### 6.3 Regional Formatting
 
 **Date and Time Formats:**
+
 - UK: DD/MM/YYYY, 24-hour time
 - US: MM/DD/YYYY, 12-hour time with AM/PM
 - EU: DD.MM.YYYY or YYYY-MM-DD, 24-hour time
 - Localized month and day names
 
 **Number Formatting:**
+
 - Decimal separator: Period (.) or comma (,) based on locale
 - Thousands separator: Comma (,) or period (.) based on locale
 - Measurement units: Metric (mm, cm) or Imperial (inches) based on region
 
 **Paper Sizes:**
+
 - UK/EU: A4, A3, A5 (ISO 216 standard)
 - US: Letter, Legal, Tabloid (ANSI standard)
 - Regional defaults based on user location
@@ -2406,6 +2453,7 @@ Rests:
 ### 7.1 Domain Logic Testing
 
 **Unit Testing Requirements:**
+
 - All domain entities must have comprehensive unit tests
 - Business rules validated through test cases
 - Edge cases and boundary conditions tested
@@ -2413,6 +2461,7 @@ Rests:
 - Repository interfaces mocked for testing
 
 **Test Coverage Targets:**
+
 - Domain entities: 95%+ code coverage
 - Use cases: 90%+ code coverage
 - Validation services: 95%+ code coverage
@@ -2421,6 +2470,7 @@ Rests:
 ### 7.2 Musical Accuracy Testing
 
 **Notation Validation:**
+
 - SMuFL symbol rendering accuracy
 - Layout calculation correctness
 - Embellishment positioning accuracy
@@ -2428,6 +2478,7 @@ Rests:
 - Page break logic validation
 
 **Musical Logic Testing:**
+
 - Time signature validation
 - Duration calculations
 - Pitch range validation
@@ -2437,6 +2488,7 @@ Rests:
 ### 7.3 Cross-Platform Consistency Testing
 
 **File Format Compatibility:**
+
 - .pbscore files readable across all platforms
 - JSON serialization/deserialization consistency
 - Round-trip testing (save and reload)
@@ -2444,6 +2496,7 @@ Rests:
 - Corrupt file handling
 
 **Domain Logic Parity:**
+
 - Identical business rule implementation across platforms
 - Consistent validation results
 - Matching calculation outputs
@@ -2452,12 +2505,14 @@ Rests:
 ### 7.4 Performance Testing
 
 **Layout Performance:**
+
 - Large document pagination performance (100+ page scores)
 - Rapid change handling (user typing speed)
 - Memory usage during complex layouts
 - Cache effectiveness measurement
 
 **Repository Performance:**
+
 - Load time for large scores
 - Save time optimization
 - Search performance (1000+ scores)
@@ -2470,12 +2525,14 @@ Rests:
 ### 8.1 Data Protection
 
 **Encryption Requirements:**
+
 - Sensitive local data encrypted at rest
 - Cloud data encryption in transit (HTTPS/TLS)
 - Optional client-side encryption before cloud upload
 - Secure key storage using platform mechanisms
 
 **Access Control:**
+
 - User authentication for cloud features
 - File-level permissions where applicable
 - Collaborative editing authorization
@@ -2484,18 +2541,21 @@ Rests:
 ### 8.2 Privacy Requirements
 
 **Data Minimization:**
+
 - Collect only data necessary for app functionality
 - Local-first architecture minimizes cloud data
 - No analytics without explicit user consent
 - No third-party data sharing
 
 **User Rights:**
+
 - Data portability (export all user data)
 - Right to deletion (complete data removal)
 - Transparency (clear privacy policy)
 - User control over cloud storage choices
 
 **Regulatory Compliance:**
+
 - GDPR compliance (EU users)
 - CCPA compliance (California users)
 - COPPA compliance (users under 13)
@@ -2508,12 +2568,14 @@ Rests:
 ### 9.1 Domain Layer Integrity
 
 **Mandatory Consistency Rules:**
+
 - Domain layer identical across all platforms (behavior, not code)
 - Business rules implemented consistently
 - Validation logic produces identical results
 - Repository interfaces respected by all implementations
 
 **Prohibited Practices:**
+
 - Platform-specific business logic variations
 - Inconsistent validation rules across platforms
 - Different calculation results between platforms
@@ -2522,12 +2584,14 @@ Rests:
 ### 9.2 Architectural Review Process
 
 **Change Management:**
+
 - Domain layer changes require architectural review
 - Breaking changes require major version increment
 - New use cases follow established patterns
 - Repository interface changes coordinated across platforms
 
 **Documentation Requirements:**
+
 - This specification is the single source of truth
 - Platform implementations document deviations (if any)
 - Architectural decisions recorded with rationale
@@ -2536,6 +2600,7 @@ Rests:
 ### 9.3 Quality Gates
 
 **Pre-Release Requirements:**
+
 - All domain layer tests passing on all platforms
 - Cross-platform file format compatibility verified
 - Performance benchmarks met
@@ -2547,6 +2612,7 @@ Rests:
 ## 10. Glossary
 
 **Domain Terms:**
+
 - **Embellishment**: Decorative musical element attached to a note (grace notes, ornaments)
 - **Grace Note**: Small ornamental note played quickly before a principal note
 - **Principal Note**: Main note to which an embellishment is attached
@@ -2557,12 +2623,14 @@ Rests:
 - **Score**: Document containing one or more tunes
 
 **Musical Terms:**
+
 - **Dotted Quarter Note**: Note duration equal to 1.5 quarter notes, standard beat unit in compound time
 - **Compound Time**: Time signature where beats divide into three (6/8, 9/8, 12/8)
 - **Simple Time**: Time signature where beats divide into two (2/4, 3/4, 4/4)
 - **Beat Unit**: Note duration representing one beat in a time signature
 
 **Pipe Band Terms:**
+
 - **Doubling**: Type of bagpipe embellishment with multiple grace notes
 - **Grip (Leamluath)**: Specific bagpipe embellishment pattern
 - **Taorluath**: Complex bagpipe embellishment with four grace notes
@@ -2570,6 +2638,7 @@ Rests:
 - **Birl**: Rapid alternating fingering pattern on bagpipes
 
 **Drum Terms:**
+
 - **Flam**: Drum embellishment with single grace note (opposite hand)
 - **Drag**: Drum embellishment with two grace notes (both opposite hand)
 - **Rough**: Drum embellishment with three grace notes (alternating hands)
@@ -2577,6 +2646,7 @@ Rests:
 - **Sticking**: Hand pattern for drum notation (Left, Right)
 
 **Technical Terms:**
+
 - **SMuFL**: Standard Music Font Layout (Unicode musical symbols)
 - **Clean Architecture**: Software architecture pattern with layered dependencies
 - **Domain Layer**: Platform-agnostic business logic layer
@@ -2593,18 +2663,21 @@ Rests:
 ## 11. References
 
 **Musical Standards:**
+
 - Standard Music Font Layout (SMuFL) Specification 1.4+
 - MusicXML 4.0 Specification
 - MIDI 1.0 Specification
 - Traditional Scottish pipe band notation conventions
 
 **Architectural Patterns:**
+
 - Clean Architecture (Robert C. Martin)
 - Domain-Driven Design (Eric Evans)
 - Repository Pattern
 - MVVM Pattern (platform presentations)
 
 **Platform Documentation:**
+
 - iOS/macOS: See `ios_macos_implementation.md`
 - Android: See `android_implementation.md`
 - Windows: See `windows_implementation.md`
@@ -2612,28 +2685,10 @@ Rests:
 
 ---
 
-## 12. Document Maintenance
-
-**Version History:**
-- Version 1.0 (2025-09-30): Initial core domain specification
-
-**Change Process:**
-- Architectural changes require review and approval
-- Domain layer changes affect all platform implementations
-- Breaking changes require major version increment
-- Platform teams notified of all domain changes
-
-**Review Schedule:**
-- Quarterly review of architectural decisions
-- Annual comprehensive specification review
-- Ad-hoc reviews for significant feature additions
-- Post-release retrospectives for lessons learned
-
----
-
 **End of Core Domain Architecture Specification**
 
 Platform-specific implementations must refer to their respective implementation documents:
+
 - `ios_macos_implementation.md` for iOS/macOS with App Store compliance
 - `android_implementation.md` for Android with Play Store guidelines
 - `windows_implementation.md` for Windows with Microsoft Store requirements
