@@ -254,27 +254,37 @@ Tune
 
 **Part Structure:**
 ```
-Part (A, B, C, Intro, Outro, etc.)
+Part (Structural Section - Part 1, Part 2, Part 3, etc.)
 ├── Metadata
 │   ├── id: UUID
-│   ├── partLetter: String
-│   ├── name: String (optional)
-│   ├── playOrder: Integer
-│   └── repeatCount: Integer
-├── TextLines[]
-│   ├── lineType: TextLineType (Title, Composer, Header, Footer)
-│   ├── text: String
-│   ├── alignment: TextAlignment
-│   └── formatting: TextFormatting
+│   ├── partNumber: Integer (1, 2, 3, 4, 5... - defines both identity and play sequence)
+│   └── name: String (optional - descriptive name like "Intro", "Outro")
 └── MusicalSystems[]
     └── (See MusicalSystem structure below)
+
+Business Rules:
+├── Part numbers must be unique within a Tune
+├── Part numbers define play order (Part 1 plays first, Part 2 plays second, etc.)
+├── Part numbers must be positive integers starting from 1
+├── Optional names supplement part numbers (e.g., Part 1 named "Intro")
+├── Each Part contains one or more MusicalSystems
+├── Each MusicalSystem spans ALL instruments in the ensemble
+├── Parts play in numerical sequence: 1, 2, 3, 4...
+└── Repeat behavior is NOT a Part property - it is defined by musical notation:
+    ├── Repeat barlines (RepeatStart, RepeatEnd) in measures
+    └── Volta brackets (1st ending, 2nd ending, etc.) for alternative endings
+
+Numbering Conventions:
+├── Standard: Part 1, Part 2, Part 3, Part 4
+├── Named: Part 1 "Intro", Part 2, Part 3, Part 4 "Outro"
+└── Display: Show "Part {partNumber}" or "{name}" if provided, or "Part {partNumber} - {name}"
 ```
 
 **MusicalSystem Structure:**
 ```
 MusicalSystem
 ├── id: UUID
-├── instruments: List<InstrumentID>
+├── instruments: List<InstrumentID> (ALL instruments in this system)
 ├── SystemStartElements
 │   └── PerInstrument
 │       ├── clef: Clef
@@ -287,9 +297,9 @@ MusicalSystem
 │   ├── alignmentHints: AlignmentHints (optional)
 │   └── instrumentSpacing: Dictionary<InstrumentID, Float>
 ├── Measures[]
-│   └── (See Measure structure below)
+│   └── Each Measure contains InstrumentMeasure for each instrument (See Measure structure below)
 └── Barlines[]
-    └── (See Barline structure below)
+    └── Span across all instruments in system (See Barline structure below)
 ```
 
 #### 3.1.3 Measure Structure with Musical Intelligence
@@ -1147,29 +1157,33 @@ Error Conditions:
 
 **CreatePartUseCase:**
 ```
+CreatePartUseCase:
 Input:
 ├── tuneId: UUID
-├── partLetter: String
-├── insertPosition: Integer
+├── partNumber: Integer (determines both identity and sequence)
+├── name: String (optional - e.g., "Intro", "Main Theme")
 └── partTemplate: PartTemplate (optional)
 
 Business Rules:
-├── Part letters should be unique within tune
-├── Insert position must be valid
+├── Part number must be unique within tune
+├── Part number must be positive integer (1, 2, 3...)
+├── Inserting part may renumber subsequent parts
+├── Part number determines play order
 ├── New part inherits instruments from tune
-└── Gets default number of measures based on template
+└── Repeat behavior NOT set on part - configured via measure barlines
 
 Output: Part
 
 Side Effects:
-├── Updates TuneLines structure
+├── May renumber existing parts if inserted in sequence
+├── Updates tune's part list
 ├── Triggers pagination recalculation
 └── Updates navigation elements
 
 Error Conditions:
 ├── TuneNotFoundError
-├── DuplicatePartLetterError
-├── InvalidInsertPositionError
+├── DuplicatePartNumberError
+├── InvalidPartNumberError (if zero or negative)
 └── PersistenceError
 ```
 
@@ -1691,6 +1705,7 @@ DomainErrorOccurredEvent:
 ```
 
 **Tune Structure:**
+```json
 {
   "tunes": [
     {
@@ -1703,18 +1718,35 @@ DomainErrorOccurredEvent:
         "sharps": 2,
         "mode": "major"
       },
-      "tuneLayoutPreference": {
-        "pageBreakPolicy": "preferred",
-        "compressionLevel": "normal",
-        "spacingPreference": "normal"
-      },
       "parts": [
         {
           "id": "part-uuid-1",
-          "partLetter": "A",
-          "playOrder": 1,
-          "repeatCount": 2,
-          "systems": []
+          "partNumber": 1,
+          "name": null,
+          "systems": [
+            {
+              "id": "system-uuid-1",
+              "measures": [
+                {
+                  "id": "measure-uuid-1",
+                  "openingBarline": "Single",
+                  "closingBarline": "Single"
+                },
+                {
+                  "id": "measure-uuid-2",
+                  "openingBarline": "Single",
+                  "closingBarline": "RepeatEnd",
+                  "endingBracket": null
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "part-uuid-2",
+          "partNumber": 2,
+          "name": null,
+          "systems": [...]
         }
       ]
     }
@@ -2228,7 +2260,7 @@ Rests:
 - **Principal Note**: Main note to which an embellishment is attached
 - **Measure/Bar**: Rhythmic unit defined by time signature
 - **System**: Group of staves for multiple instruments, played simultaneously
-- **Part**: Named section of a tune (A, B, C, Intro, Outro, etc.)
+- **Part**: Numbered section of a tune (1, 2, 3, etc.)
 - **Tune**: Complete musical composition with one or more parts
 - **Score**: Document containing one or more tunes
 
