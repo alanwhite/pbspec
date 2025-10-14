@@ -188,6 +188,10 @@ InstrumentCapabilities
 │   ├── primaryClef: Default clef for instrument
 │   └── acceptableAlternatives: Optional alternative clefs
 ├── NotationRules
+│   ├── staffConfiguration: StaffConfiguration
+│   │   ├── lineCount: Integer (5 for bagpipes, 1 for drums)
+│   │   ├── staffType: StaffType (Standard, Percussion)
+│   │   └── spacingRequirements: Float
 │   ├── ornamentAvailability: Supported embellishment types
 │   └── specialSymbols: Instrument-specific notation symbols
 ├── AudioCharacteristics
