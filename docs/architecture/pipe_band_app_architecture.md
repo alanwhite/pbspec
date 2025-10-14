@@ -244,7 +244,7 @@ Tune
 │   ├── title: String
 │   ├── composer: String (optional)
 │   ├── tuneType: TuneType (March, Strathspey, Reel, Jig, etc.)
-│   ├── tempo: BPM (beats per minute)
+│   ├── tempo: TempoMarking
 │   ├── keySignature: KeySignature
 │   └── orientationOverride: PageOrientation (optional)
 ├── TuneLayoutPreference
@@ -512,6 +512,23 @@ TimeSignature
 │   ├── visibility: TimeSignatureVisibility
 │   └── alignment: TimeSignatureAlignment
 └── Methods
+    ├── getSuggestedTempoNoteValue() -> Duration
+    │   └── Returns appropriate note value for tempo marking
+    │       ├── 2/4, 3/4, 4/4 → Quarter Note
+    │       ├── 6/8, 9/8, 12/8 → Dotted Quarter Note
+    │       ├── 2/2, 3/2 → Half Note
+    │       └── Irregular meters → Context-dependent
+    ├── validateTempoCompatibility(TempoMarking) -> ValidationResult
+    │   └── Checks if tempo note value makes musical sense
+    │       ├── Warning: Quarter note tempo with 6/8 time (should use dotted quarter)
+    │       ├── Warning: Dotted quarter with 4/4 time (should use quarter note)
+    │       └── Error: Nonsensical combinations (whole note tempo with 2/4 time)
+    ├── getDefaultTempo() -> TempoMarking
+    │    └── Returns culturally appropriate default tempo for time signature
+    │       ├── 4/4 → ♩ = 90 (standard march)
+    │       ├── 6/8 → ♩. = 96 (standard jig)
+    │       ├── 2/4 → ♩ = 90 (standard march)
+    │       └── Other signatures → context-dependent defaults
     ├── getBeatsPerMeasure() -> Integer
     ├── getBeatValue() -> Duration
     ├── getStrongBeats() -> List<Integer>
@@ -525,6 +542,20 @@ TimeSignature
 - 4/4 (March, Strathspey)
 - 6/8 (Jig, March)
 - 9/8 (Slip Jig, Compound Time March)
+
+**Beat Grouping and Tempo Relationship:**
+```
+Complex Meter Examples:
+├── 5/4 with grouping [3,2]
+│   ├── Could be marked: ♩ = 120
+│   └── Alternative: (♩ = 120, grouped 3+2)
+├── 7/8 with grouping [3,2,2]
+│   ├── Could be marked: ♪ = 200
+│   └── Alternative: ♩. = 100, ♩ = 100, ♩ = 100 (three separate beats)
+└── 9/8 traditional vs compound
+    ├── Compound: ♩. = 100 (three beats)
+    └── Irregular: ♪ = 300 (nine beats) - rare
+```
 
 #### 3.1.8 Barline System
 
@@ -569,6 +600,244 @@ RepeatConfiguration
 ├── repeatCount: Integer (number of times to repeat)
 ├── endingNumbers: List<Integer> (for 1st/2nd ending brackets)
 └── voltaBracket: VoltaBracket (optional ending bracket specification)
+```
+
+#### 3.1.9 Tempo Marking Entity
+
+**TempoMarking Structure:**
+```
+TempoMarking
+├── Musical Properties
+│   ├── noteValue: Duration (required - the note duration that defines the beat)
+│   │   ├── Representation as note type (whole, half, quarter, eighth, etc.)
+│   │   ├── Support for dotted notes (dotted quarter, dotted half, etc.)
+│   │   └── Support for compound values (half + quarter for complex meters)
+│   ├── beatsPerMinute: Integer (required - count of noteValue per minute)
+│   │   ├── Valid range: 30-300 (typical musical range)
+│   │   ├── Extended range: 20-400 (for extreme cases)
+│   │   └── Integer precision sufficient for musical accuracy
+│   ├── textualMarking: String (optional - traditional Italian terms)
+│   │   ├── Examples: "Allegro", "Andante", "Moderato", "Presto"
+│   │   ├── Pipe band specific: "Quick March", "Slow March", "Strathspey Time"
+│   │   └── Custom text allowed for specialized cases
+│   └── modifier: TempoModifier (optional - performance instructions)
+│       ├── "circa" (~) - approximately the marked tempo
+│       ├── "a tempo" - return to previous tempo
+│       ├── "ritardando" - gradually slowing
+│       ├── "accelerando" - gradually speeding up
+│       └── Other standard tempo modifiers
+├── Display Properties
+│   ├── position: Point (optional - placement on staff)
+│   ├── alignment: TempoAlignment (left, center, right)
+│   └── visibility: TempoVisibility (show/hide)
+├── Validation Rules
+│   ├── beatsPerMinute must be in valid range
+│   ├── noteValue must be valid Duration type
+│   ├── textualMarking must be recognized term if provided
+│   └── noteValue should logically relate to time signature
+└── Methods
+    ├── calculateMillisecondsPerBeat() -> Float
+    │   └── Returns: (60000.0 / beatsPerMinute)
+    ├── isEquivalentTo(TempoMarking) -> Boolean
+    │   └── Checks if two tempo markings produce same playback speed
+    ├── getSMuFLRepresentation() -> String
+    │   └── Returns: Unicode string for notation rendering
+    ├── getPlaybackDuration(Duration) -> Milliseconds
+    │   └── Calculates real-time duration for any note value
+    └── validateCompatibility(TimeSignature) -> ValidationResult
+        └── Checks if tempo note value makes musical sense for time signature
+```
+
+**Tempo Note Value Types:**
+```
+Duration Enumeration (for tempo marking):
+├── Whole Note (Semibreve): Entire measure duration (rare in tempo markings)
+├── Dotted Half Note: 3 quarter note beats
+├── Half Note (Minim): 2 quarter note beats
+├── Dotted Quarter Note: 3 eighth note beats (common in compound time)
+├── Quarter Note (Crotchet): Standard beat unit (most common)
+├── Dotted Eighth Note: 3 sixteenth note beats (rare)
+├── Eighth Note (Quaver): Half a quarter beat (fast tempos)
+└── Sixteenth Note (Semiquaver): Quarter of a quarter beat (very rare)
+```
+
+**Pipe Band Tempo Conventions:**
+```
+Standard Pipe Band Tempos:
+├── March (2/4 or 4/4)
+│   ├── Slow March: ♩ = 70-80 (solemn, processional)
+│   ├── Standard March: ♩ = 80-90 (parade tempo)
+│   ├── Quick March: ♩ = 90-96 (spirited)
+│   └── Competition March: ♩ = 85-90 (regulated for competition)
+├── Strathspey (4/4)
+│   ├── Traditional: ♩ = 168-176 (slow, stately, with "Scotch snap")
+│   ├── Competition: ♩ = 168-172 (regulated)
+│   └── Alternative notation: ♪ = 336-344 (some prefer eighth note reference)
+├── Reel (4/4 or 2/2)
+│   ├── Standard: ♩ = 112-120 (lively, flowing)
+│   ├── Fast Reel: ♩ = 120-126 (energetic)
+│   └── Competition: ♩ = 112-116 (regulated)
+├── Jig (6/8)
+│   ├── Standard: ♩. = 88-104 (dotted quarter = beat unit)
+│   ├── Slow Jig: ♩. = 80-88 (more relaxed)
+│   └── Competition: ♩. = 92-96 (regulated)
+├── Slip Jig (9/8)
+│   ├── Standard: ♩. = 96-112 (dotted quarter = beat unit)
+│   └── Competition: ♩. = 100-108 (regulated)
+├── Hornpipe (4/4)
+│   ├── Traditional: ♩ = 104-120 (with triplet or dotted feel)
+│   └── Scottish Hornpipe: ♩ = 112-120 (distinct from Irish style)
+└── Slow Air (Various)
+    ├── Extremely flexible: ♩ = 40-72 (highly expressive)
+    ├── Rubato common: tempo varies throughout
+    └── Often marked "Freely" or "Ad libitum"
+```
+
+**Musical Logic and Validation:**
+
+**Time Signature Compatibility:**
+```
+Recommended Tempo Note Values by Time Signature:
+├── Simple Time (2/4, 3/4, 4/4, 2/2, 3/2)
+│   ├── Primary: Quarter note (♩)
+│   ├── Alternative: Half note (𝅗𝅥) for slower pieces
+│   └── Alternative: Eighth note (♪) for very fast pieces
+├── Compound Duple (6/8, 6/4, 6/16)
+│   ├── Primary: Dotted quarter note (♩.)
+│   ├── Alternative: Dotted half note (𝅗𝅥.) for very slow pieces
+│   └── Never: Quarter note (creates ambiguity)
+├── Compound Triple (9/8, 9/4, 9/16)
+│   ├── Primary: Dotted quarter note (♩.)
+│   └── Alternative: Dotted half note (𝅗𝅥.) for slow pieces
+├── Compound Quadruple (12/8, 12/4, 12/16)
+│   ├── Primary: Dotted quarter note (♩.)
+│   └── Alternative: Dotted half note (𝅗𝅥.) for slow pieces
+└── Irregular Meters (5/4, 7/8, etc.)
+    ├── Varies based on beat grouping
+    ├── May use compound note values
+    └── Often requires explicit beat subdivision marking
+```
+
+**Tempo Equivalence Calculations:**
+```
+Tempo Equivalence Examples:
+├── ♩ = 60 is equivalent to:
+│   ├── 𝅗𝅥 = 30 (half notes)
+│   ├── ♪ = 120 (eighth notes)
+│   └── ♩. = 40 (dotted quarters)
+├── ♩. = 90 (6/8 jig tempo) is equivalent to:
+│   ├── ♩ = 135 (if counted in quarters - not recommended)
+│   └── ♪ = 270 (if counted in eighths - not useful)
+└── ♩ = 120 (4/4 reel) is equivalent to:
+    ├── 𝅗𝅥 = 60 (half note reference)
+    └── ♪ = 240 (eighth note reference)
+```
+
+**Display Rendering:**
+
+**SMuFL Rendering Requirements:**
+```
+Tempo Marking Display Components:
+├── Note Symbol: SMuFL glyph for note value
+│   ├── Quarter Note: U+E1D5 (♩)
+│   ├── Dotted Quarter: U+E1D5 + U+E1E7 (♩.)
+│   ├── Half Note: U+E1D3 (𝅗𝅥)
+│   ├── Eighth Note: U+E1D7 (♪)
+│   └── Other durations: corresponding SMuFL codepoints
+├── Equals Sign: Standard Unicode U+003D (=)
+├── Beats Per Minute: Standard numerals
+├── Textual Marking: Standard text (bold or italic)
+│   ├── Position: Above or before numeric tempo
+│   └── Font: Match document text style
+└── Complete Example: "♩ = 120" or "Allegro (♩ = 120)"
+```
+
+**Placement Guidelines:**
+```
+Tempo Marking Placement:
+├── Position: Above first staff of system
+├── Alignment: Left-aligned with first measure
+├── Clearance: Minimum 2 staff spaces above highest staff line
+├── Changes: New tempo markings at point of change
+└── Returns: "a tempo" marking when returning to previous tempo
+```
+
+**Playback Calculation:**
+
+**Milliseconds Per Beat Calculation:**
+```
+Formula: millisecondsPerBeat = 60000.0 / beatsPerMinute
+
+Examples:
+├── ♩ = 120 → 60000 / 120 = 500ms per quarter note
+├── ♩. = 90 → 60000 / 90 = 666.67ms per dotted quarter
+└── ♩ = 80 → 60000 / 80 = 750ms per quarter note
+```
+
+**Note Duration Calculation:**
+```
+To calculate real-time duration for any note:
+1. Determine note's relationship to tempo note value
+2. Calculate proportional duration
+3. Apply any duration adjustments
+
+Example (♩ = 120, playing an eighth note):
+├── Tempo: ♩ = 120 → 500ms per quarter note
+├── Eighth note: Half of quarter note
+└── Result: 500ms / 2 = 250ms for eighth note
+
+Example (♩. = 90, playing a quarter note):
+├── Tempo: ♩. = 90 → 666.67ms per dotted quarter
+├── Quarter note: 2/3 of dotted quarter note
+└── Result: 666.67ms × (2/3) = 444.44ms for quarter note
+```
+
+**Export Considerations:**
+
+**MIDI Export:**
+```
+MIDI Tempo Conversion:
+├── MIDI uses microseconds per quarter note
+├── Conversion formula:
+│   └── microsecondsPerQuarterNote = 60000000 / (beatsPerMinute × conversionFactor)
+├── Conversion factors:
+│   ├── If tempo is ♩ = X → factor = 1.0
+│   ├── If tempo is ♩. = X → factor = 1.5 (dotted quarter to quarter)
+│   ├── If tempo is 𝅗𝅥 = X → factor = 0.5 (half note to quarter)
+│   └── If tempo is ♪ = X → factor = 2.0 (eighth to quarter)
+└── Result: MIDI tempo event with calculated value
+```
+
+**MusicXML Export:**
+```
+MusicXML Tempo Representation:
+<sound tempo="120"/>  <!-- Always in quarter notes per minute -->
+<direction>
+  <direction-type>
+    <metronome>
+      <beat-unit>quarter</beat-unit>
+      <per-minute>120</per-minute>
+    </metronome>
+  </direction-type>
+</direction>
+
+For dotted notes:
+<metronome>
+  <beat-unit>quarter</beat-unit>
+  <beat-unit-dot/>  <!-- Indicates dotted note -->
+  <per-minute>90</per-minute>
+</metronome>
+```
+
+**Educational Considerations:**
+
+**Beginner-Friendly Display:**
+```
+Progressive Complexity:
+├── Basic Display: "♩ = 120" (numeric only)
+├── Intermediate: "Quick March (♩ = 90)" (adds context)
+├── Advanced: "♩ = 90 (circa)" (adds performance nuance)
+└── Educational: Show relationship between note values and tempo
 ```
 
 ### 3.2 Embellishment System Architecture
@@ -1109,11 +1378,23 @@ Input:
 ├── scoreId: UUID
 ├── insertPosition: Integer
 ├── tuneTemplate: TuneTemplate
+│   ├── title: String
+│   ├── tuneType: TuneType
+│   ├── tempo: TempoMarking (defaults based on tuneType if not provided)
+│   ├── keySignature: KeySignature
+│   └── defaultTimeSignature: TimeSignature
 └── layoutPreference: TuneLayoutPreference (optional)
 
 Business Rules:
 ├── Insert position must be valid (0 to tunes.count)
 ├── New tune gets default instruments from score
+├── Tempo defaults applied based on tune type if not specified:
+│   ├── March → ♩ = 90
+│   ├── Strathspey → ♩ = 168
+│   ├── Reel → ♩ = 112
+│   ├── Jig → ♩. = 96
+│   └── Other types → context-dependent defaults
+├── Tempo note value must be compatible with time signature
 ├── Layout preference inherits from document if not specified
 └── Must trigger pagination recalculation
 
@@ -1123,11 +1404,13 @@ Side Effects:
 ├── Updates Pages[] assignment structure
 ├── Triggers layout recalculation
 ├── May affect page breaks for subsequent tunes
-└── Updates navigation elements
+├── Updates navigation elements
+└── Caches default tempo for tune type
 
 Error Conditions:
 ├── ScoreNotFoundError
 ├── InvalidInsertPositionError
+├── IncompatibleTempoError (tempo note value incompatible with time signature)
 └── PersistenceError
 ```
 
@@ -1717,7 +2000,12 @@ DomainErrorOccurredEvent:
       "title": "Scotland the Brave",
       "composer": "Traditional",
       "tuneType": "march",
-      "tempo": 80,
+      "tempo": {
+        "noteValue": "quarter",
+        "beatsPerMinute": 80,
+        "textualMarking": "March Time",
+        "modifier": null
+      },
       "keySignature": {
         "sharps": 2,
         "mode": "major"
@@ -2268,6 +2556,12 @@ Rests:
 - **Tune**: Complete musical composition with one or more parts
 - **Score**: Document containing one or more tunes
 
+**Musical Terms:**
+- **Dotted Quarter Note**: Note duration equal to 1.5 quarter notes, standard beat unit in compound time
+- **Compound Time**: Time signature where beats divide into three (6/8, 9/8, 12/8)
+- **Simple Time**: Time signature where beats divide into two (2/4, 3/4, 4/4)
+- **Beat Unit**: Note duration representing one beat in a time signature
+
 **Pipe Band Terms:**
 - **Doubling**: Type of bagpipe embellishment with multiple grace notes
 - **Grip (Leamluath)**: Specific bagpipe embellishment pattern
@@ -2289,6 +2583,10 @@ Rests:
 - **Repository Pattern**: Data access abstraction pattern
 - **Use Case**: Business operation specification
 - **Entity**: Domain object with identity and lifecycle
+- **Tempo Marking**: Specification of performance speed using note value and count per minute
+- **Note Value (Tempo)**: Duration type used as beat unit in tempo marking (quarter, dotted quarter, etc.)
+- **Beats Per Minute**: Count of specified note values played in one minute
+- **Tempo Equivalence**: Mathematical relationship between different tempo markings producing same playback speed
 
 ---
 
