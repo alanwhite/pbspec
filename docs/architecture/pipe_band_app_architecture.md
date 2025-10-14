@@ -27,6 +27,7 @@ This document defines the **platform-agnostic architectural foundation** for a S
 - Platform-specific audio processing details
 
 **Related Documents:**
+- `ux_interaction_design.md` - UX specification for interacting with scores
 - `ios_macos_implementation.md` - iOS/macOS implementation with App Store compliance
 - `android_implementation.md` - Android implementation with Play Store guidelines
 - `windows_implementation.md` - Windows implementation with Microsoft Store requirements
